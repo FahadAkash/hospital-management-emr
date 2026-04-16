@@ -1,0 +1,250 @@
+.home-analytics-page {
+  padding: 16px;
+}
+
+.home-analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.home-analytics-header h2 {
+  margin: 0 0 6px;
+}
+
+.home-analytics-header p {
+  margin: 0;
+  color: #666;
+}
+
+.range-switcher {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.range-button {
+  border: 1px solid #d5dbe1;
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.range-button.active {
+  background: #008ffb;
+  border-color: #008ffb;
+  color: #fff;
+}
+
+.analytics-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+.analytics-panel {
+  min-width: 100%;
+  scroll-snap-align: start;
+  background: #f7f9fb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-header h3,
+.card-header h4,
+.side-by-side h5 {
+  margin: 0;
+}
+
+.panel-header p {
+  margin: 4px 0 0;
+  color: #666;
+}
+
+.panel-badge {
+  background: #eef5ff;
+  color: #2469d9;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.summary-grid,
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-card,
+.analytics-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.summary-card h3 {
+  margin: 8px 0 4px;
+  font-size: 28px;
+}
+
+.summary-card p,
+.card-header p {
+  margin: 0;
+  color: #667085;
+}
+
+.summary-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.summary-card.primary {
+  background: linear-gradient(135deg, #008ffb, #00b6ff);
+  color: #fff;
+}
+
+.summary-card.primary .summary-label,
+.summary-card.primary p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.summary-card.warning { border-top: 4px solid #feb019; }
+.summary-card.danger { border-top: 4px solid #ff4560; }
+.summary-card.success { border-top: 4px solid #00e396; }
+.summary-card.info { border-top: 4px solid #775dd0; }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chart-host {
+  height: 280px;
+  position: relative;
+}
+
+.mini-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mini-stats-grid div {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.mini-stats-grid strong {
+  display: block;
+  font-size: 22px;
+}
+
+.mini-stats-grid span {
+  font-size: 12px;
+  color: #475467;
+}
+
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #008ffb, #00e396);
+}
+
+.table-card {
+  grid-column: span 2;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+.side-by-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.summary-list-item {
+  display: flex;
+  justify-content: space-between;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 1400px) {
+  .summary-grid,
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mini-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .home-analytics-header,
+  .panel-header,
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-grid,
+  .analytics-grid,
+  .side-by-side,
+  .mini-stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .table-card {
+    grid-column: span 1;
+  }
+}

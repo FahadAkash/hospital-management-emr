@@ -1587,13 +1587,15 @@ namespace DanpheEMR.Controllers.Reporting
             return DanpheJSONConvert.SerializeObject(responseData);
         }
         //
-        public string ERDashboard()
+        public string ERDashboard(DateTime? FromDate, DateTime? ToDate)
         {
             DanpheHTTPResponse<DynamicReport> responseData = new DanpheHTTPResponse<DynamicReport>();
             try
             {
                 ReportingDbContext reportingDbContext = new ReportingDbContext(connString);
-                DynamicReport dsbStats = reportingDbContext.Emergency_DashboardStatistics();
+                DynamicReport dsbStats = (FromDate.HasValue && ToDate.HasValue)
+                    ? reportingDbContext.Emergency_DashboardStatistics(FromDate.Value, ToDate.Value)
+                    : reportingDbContext.Emergency_DashboardStatistics();
                 responseData.Status = "OK";
                 responseData.Results = dsbStats;
             }

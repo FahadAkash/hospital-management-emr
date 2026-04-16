@@ -1,125 +1,239 @@
-<div class="wrapper right-content-wrapper">
-  <div class="row">
-    <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
-      <div class="dashboard-stat dashboard-stat-v2 blue point-cursor">
-        <div class="visual"> <i class="visual_icon"><img src="../../themes/theme-default/images/dashboard_icon/medical.svg" alt=""></i> </div>
-        <div class="details clearfix">
-          <div class="board-title clearfix">
-            <div>
-              <p>Registered Patient </p>
-              <span>Total Patient: {{dsbStats.TotalPatient}} </span>
-            </div>
-            <div class="count">{{dsbStats.TotalPatient}}</div>
-          </div>
-          <div class="left clearfix"> <span>Today : {{dsbStats.TodayPatient}} </span> <span>Yesterday : {{dsbStats.YestardayPatient}} </span> </div>
-          <!-- <div>
+<div class="home-analytics-page">
+  <div class="home-analytics-header">
+    <div>
+      <h2>Homepage Analytics</h2>
+      <p>Compare patient, bed, emergency, lab, billing, department and doctor information from one place.</p>
+    </div>
+    <div class="range-switcher">
+      <button *ngFor="let panel of panels; let i = index"
+              type="button"
+              class="range-button"
+              [class.active]="activePanelIndex === i"
+              (click)="setActivePanel(i)">
+        {{panel.title}}
+      </button>
+    </div>
+  </div>
 
-            <div class="left">
-              <span>Today : {{dsbStats.TodayPatient}} </span><br />
-              <span>Yesterday : {{dsbStats.YestardayPatient}} </span><br />
-            </div>
--->
-          <!--
-            <div class="right">
-              <span>Total Patient : {{dsbStats.TotalPatient}} </span><br />
-            </div>
+  <div #carouselContainer class="analytics-carousel" (scroll)="onPanelScroll()">
+    <section *ngFor="let panel of panels; let i = index" class="analytics-panel">
+      <div class="panel-header">
+        <div>
+          <h3>{{panel.title}}</h3>
+          <p>{{panel.fromDate}} to {{panel.toDate}}</p>
+        </div>
+        <div class="panel-badge">{{panel.subtitle}}</div>
+      </div>
 
-          </div>-->
+      <div class="summary-grid">
+        <div class="summary-card primary">
+          <span class="summary-label">Patients</span>
+          <h3>{{sumPatientCount(panel)}}</h3>
+          <p>Total visits in selected range</p>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Doctors</span>
+          <h3>{{totalDoctors(panel)}}</h3>
+          <p>Doctor summary rows aggregated</p>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Appointments</span>
+          <h3>{{totalAppointments(panel)}}</h3>
+          <p>Department-wise appointments</p>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Readmissions</span>
+          <h3>{{totalReadmissions(panel)}}</h3>
+          <p>Readmission summary</p>
+        </div>
+        <div class="summary-card warning">
+          <span class="summary-label">In Bed</span>
+          <h3>{{totalInBed(panel)}}</h3>
+          <p>Current inpatient census</p>
+        </div>
+        <div class="summary-card danger">
+          <span class="summary-label">Emergency Registered</span>
+          <h3>{{panel.emergencySummary.TotalRegisteredPatients}}</h3>
+          <p>ER registrations in range</p>
+        </div>
+        <div class="summary-card success">
+          <span class="summary-label">Lab Tests</span>
+          <h3>{{totalLabMembership(panel)}}</h3>
+          <p>Membership-wise lab totals</p>
+        </div>
+        <div class="summary-card info">
+          <span class="summary-label">Billing Invoices</span>
+          <h3>{{totalBillingMembership(panel)}}</h3>
+          <p>Membership-wise invoice totals</p>
         </div>
       </div>
-    </div>
-    <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
-      <div class="dashboard-stat dashboard-stat-v2 red">
-        <div class="visual"> <i class="visual_icon"><img src="../../themes/theme-default/images/dashboard_icon/doctor.svg" alt=""></i> </div>
-        <div class="details clearfix">
-          <!--
-                <div class="board-title clearfix">
-                    Total Doctors : {{dsbStats.TotalDoctorsCount}}
+
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Patient Count by Day</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'patientDailyChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Average Treatment Cost by Age Group</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'treatmentCostChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Department Wise Appointment Count</h4>
+            <span>Total {{totalAppointments(panel)}}</span>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'departmentChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Emergency Health Information</h4>
+          </div>
+          <div class="mini-stats-grid">
+            <div><strong>{{panel.emergencySummary.TotalTriagedPatients}}</strong><span>Triaged</span></div>
+            <div><strong>{{panel.emergencySummary.MildPatients}}</strong><span>Mild</span></div>
+            <div><strong>{{panel.emergencySummary.ModeratePatients}}</strong><span>Moderate</span></div>
+            <div><strong>{{panel.emergencySummary.CriticalPatients}}</strong><span>Critical</span></div>
+            <div><strong>{{panel.emergencySummary.DeathPatients}}</strong><span>Death Triage</span></div>
+            <div><strong>{{panel.emergencySummary.TotalFinalizedPatients}}</strong><span>Finalized</span></div>
+            <div><strong>{{panel.emergencySummary.AdmittedPatients}}</strong><span>Admitted</span></div>
+            <div><strong>{{panel.emergencySummary.TransferredPatients}}</strong><span>Transferred</span></div>
+            <div><strong>{{panel.emergencySummary.DischargedPatients}}</strong><span>Discharged</span></div>
+            <div><strong>{{panel.emergencySummary.LAMAPatients}}</strong><span>LAMA</span></div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Trending Lab Tests</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'labTrendingChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Lab Membership Distribution</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'labMembershipChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Billing Membership Distribution</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'billingMembershipChart-' + panel.key"></canvas>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Billing Rank Distribution</h4>
+          </div>
+          <div class="chart-host">
+            <canvas [attr.id]="'billingRankChart-' + panel.key"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="card-header">
+            <h4>Hospital Management Breakdown</h4>
+          </div>
+          <div class="progress-list">
+            <div class="progress-item" *ngFor="let item of panel.hospitalManagement">
+              <div class="progress-label">
+                <span>{{item.Label}}</span>
+                <span>{{item.Count}}</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" [style.width.%]="item.Percentage || 0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card table-card">
+          <div class="card-header">
+            <div>
+              <h4>Bed Information / Inpatient Census</h4>
+              <p>Admitted {{panel.totalAdmittedPatients}} | Discharged {{panel.totalDischargedPatients}}</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Ward</th>
+                  <th>In Bed</th>
+                  <th>Admission</th>
+                  <th>Trans In</th>
+                  <th>Trans Out</th>
+                  <th>Discharged</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let ward of panel.wardSummary">
+                  <td>{{ward.Ward}}</td>
+                  <td>{{ward.InBed}}</td>
+                  <td>{{ward.NewAdmission}}</td>
+                  <td>{{ward.TransIn}}</td>
+                  <td>{{ward.TransOut}}</td>
+                  <td>{{ward.Discharged}}</td>
+                  <td>{{ward.Total}}</td>
+                </tr>
+                <tr *ngIf="!panel.wardSummary || panel.wardSummary.length === 0">
+                  <td colspan="7">No ward data available for this range.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="analytics-card table-card">
+          <div class="card-header">
+            <h4>Doctor / Patient Summary</h4>
+          </div>
+          <div class="side-by-side">
+            <div>
+              <h5>Doctors</h5>
+              <div class="summary-list">
+                <div class="summary-list-item" *ngFor="let item of panel.doctorCards">
+                  <span>{{item.Label}}</span>
+                  <strong>{{item.Total || 0}}</strong>
                 </div>
--->
-          <div class="board-title clearfix">
-            <div>
-              <p>Total Doctors</p>
-              <span>Consultants : {{dsbStats.ConsultantsCount}} </span>
+              </div>
             </div>
-            <div class="count">{{dsbStats.TotalDoctorsCount}}</div>
-          </div>
-          <div class="left clearfix">
-            <!--                        <span>Consultants : {{dsbStats.ConsultantsCount}} </span><br />-->
-            <span>Medical Officers: {{dsbStats.MedicalOfficersCount}} </span> <span>Anaesthetists: {{dsbStats.AnaesthetistsCount}} </span>
-          </div>
-          <!--
-                    <div class="right">
-                        <span>Anaesthetists: {{dsbStats.AnaesthetistsCount}} </span><br />
-                    </div>
--->
-
-        </div>
-        <!--<div class="details">
-        <div class="number">
-            <span data-counter="counterup" data-value="12,5">{{dsbStats.TotalDoctors}}</span>
-        </div>
-        <div class="desc"> Total Doctors </div>
-    </div>-->
-      </div>
-    </div>
-    <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12"> <a class="dashboard-stat dashboard-stat-v2 green">
-        <div class="visual">
-          <div class="visual"> <i class="visual_icon"><img src="../../themes/theme-default/images/dashboard_icon/schedule.svg" alt=""></i> </div>
-        </div>
-        <div class="details clearfix">
-          <div class="board-title clearfix">
             <div>
-              <p>Today's Appointments</p>
-              <span>New : {{dsbStats.NewAppts}} </span> <span>Follow up : {{dsbStats.FollowUpAppts}} </span> <span>Referrals :
-                {{dsbStats.ReferralAppts}} </span>
+              <h5>Readmission</h5>
+              <div class="summary-list">
+                <div class="summary-list-item" *ngFor="let item of panel.readmissionCards">
+                  <span>{{item.Label}}</span>
+                  <strong>{{item.Total || 0}}</strong>
+                </div>
+              </div>
             </div>
-            <div class="count">{{dsbStats.TotalAppts}}</div>
           </div>
-          <!--      <div style="text-align: center;font-weight: bold;font-size: 17px;margin-bottom:10px;margin-top:5px;"> Today's Appointments : {{dsbStats.TotalAppts}} </div>-->
-
-          <!--
-        <div class="left"> <span>New : {{dsbStats.NewAppts}} </span>
-          <span>Follow up : {{dsbStats.FollowUpAppts}} </span>
-          <span>Referrals : {{dsbStats.ReferralAppts}} </span>
-        </div>
--->
-          <div class="left clearfix"> <span>Cancelled : {{dsbStats.CancelAppts}} </span> <span>Returned : {{dsbStats.ReturnAppts}} </span> </div>
-        </div>
-      </a> </div>
-  </div>
-  <div class="clearfix"></div>
-  <!-- END DASHBOARD STATS 1-->
-  <div class="row">
-    <!-- <div *ngIf="showCountryMap" class="col-lg-6 col-md-6">
-      <div class="portlet light">
-        <div class="portlet-title">
-          <div class="caption lb-caption no-margin no-padding"> <i class="icon-bar-chart"></i> <span class="caption-subject"> Patient distribution (zone wise) </span> <span class="caption-helper"></span> </div>
-          <div class="tools"> <a href="javascript:;" class="collapse" data-original-title="" title=""> </a> <a href="javascript:;" class="fullscreen" data-original-title="" title=""> </a> <a href="javascript:;" class="remove" data-original-title="" title=""> </a> </div>
-        </div>
-        <div class="portlet-body">
-          <div id="dvZoneWisePatientMap" class="CSSAnimationChart" style="height:400px;"></div>
         </div>
       </div>
-    </div> -->
-    <div class="col-lg-6 col-xs-12 col-sm-12">
-      <div class="portlet light">
-        <div class="portlet-title">
-          <div class="caption lb-caption no-margin no-padding"> <i class="icon-bar-chart"></i> <span class="caption-subject"> Department wise
-              appointment count on {{currentDate}} </span> <span class="caption-helper"></span> </div>
-          <div class="tools"> <a href="javascript:;" class="collapse" data-original-title="" title=""> </a> <a href="javascript:;" class="fullscreen"
-               data-original-title="" title=""> </a> <a href="javascript:;" class="remove" data-original-title="" title=""> </a> </div>
-        </div>
-        <div class="portlet-body">
-          <div id="dvPieChart" class="CSSAnimationChart" style="height:300px;"></div>
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
-  <!--
-<div class="clearfix"></div>
-<div class="row">
-  <div class="col-lg-6 col-xs-12 col-sm-12"> </div>
-</div>
--->
 </div>

@@ -1292,6 +1292,48 @@ namespace DanpheEMR.DalLayer
             return dReport;
         }
 
+        public DynamicReport Emergency_DashboardStatistics(DateTime fromDate, DateTime toDate)
+        {
+            using (EmergencyDbContext emergencyDbContext = new EmergencyDbContext(this.connStr))
+            {
+                DateTime rangeStart = fromDate.Date;
+                DateTime rangeEndExclusive = toDate.Date.AddDays(1);
+
+                var registeredPatients = emergencyDbContext.EmergencyPatient
+                    .Where(er => er.IsActive && er.CreatedOn >= rangeStart && er.CreatedOn < rangeEndExclusive);
+
+                var triagedPatients = emergencyDbContext.EmergencyPatient
+                    .Where(er => er.IsActive && er.TriagedOn >= rangeStart && er.TriagedOn < rangeEndExclusive);
+
+                var finalizedPatients = emergencyDbContext.EmergencyPatient
+                    .Where(er => er.IsActive && er.FinalizedOn >= rangeStart && er.FinalizedOn < rangeEndExclusive);
+
+                var dashboardRow = new
+                {
+                    TotalRegisteredPatients = registeredPatients.Count(),
+                    MildPatients = triagedPatients.Count(er => er.TriageCode != null && er.TriageCode.ToLower() == "mild"),
+                    ModeratePatients = triagedPatients.Count(er => er.TriageCode != null && er.TriageCode.ToLower() == "moderate"),
+                    CriticalPatients = triagedPatients.Count(er => er.TriageCode != null && er.TriageCode.ToLower() == "critical"),
+                    DeathPatients = triagedPatients.Count(er => er.TriageCode != null && er.TriageCode.ToLower() == "death"),
+                    TotalTriagedPatients = triagedPatients.Count(),
+                    LAMAPatients = finalizedPatients.Count(er => er.FinalizedStatus != null && er.FinalizedStatus.ToLower() == "lama"),
+                    AdmittedPatients = finalizedPatients.Count(er => er.FinalizedStatus != null && er.FinalizedStatus.ToLower() == "admitted"),
+                    TransferredPatients = finalizedPatients.Count(er => er.FinalizedStatus != null && er.FinalizedStatus.ToLower() == "transferred"),
+                    DischargedPatients = finalizedPatients.Count(er => er.FinalizedStatus != null && er.FinalizedStatus.ToLower() == "discharged"),
+                    TotalFinalizedPatients = finalizedPatients.Count()
+                };
+
+                DynamicReport dReport = new DynamicReport();
+                var ERDashboard = new
+                {
+                    LabelData = new List<object>() { dashboardRow }
+                };
+                dReport.Schema = null;
+                dReport.JsonData = JsonConvert.SerializeObject(ERDashboard);
+                return dReport;
+            }
+        }
+
         #endregion
 
         #region IRD Related reporting methods
