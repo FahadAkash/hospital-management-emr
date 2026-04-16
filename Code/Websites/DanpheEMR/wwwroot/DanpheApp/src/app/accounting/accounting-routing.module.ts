@@ -16,6 +16,7 @@ import { BalanceSheetReportComponent } from './reports/balance-sheet/balance-she
 import { CashBankBookReportComponent } from './reports/cash-bank-book-report/cash-bank-book-report.component';
 import { DailyTransactionReportComponent } from './reports/daily-transaction/daily-transaction-report.component';
 import { DaywiseVoucherReportComponent } from './reports/daywise-voucher-report/daywise-voucher-report.component';
+import { EmployeeFinancial360Component } from './reports/employee-financial-360/employee-financial-360.component';
 import { GroupStatementReportComponent } from './reports/group-statement-report/group-statement-report.component';
 import { LedgerReportComponent } from './reports/ledger-report/ledger-report.component';
 import { ProfitLossReportComponent } from './reports/profit-loss/profit-loss-report.component';
@@ -73,6 +74,7 @@ import { VoucherVerificationComponent } from './voucher-verification/voucher-ver
                     { path: 'Reports/Cash-BankBookReport', component: CashBankBookReportComponent, canActivate: [AuthGuardService] },
                     { path: 'Reports/DayBookReport', component: DayBookReportComponent, canActivate: [AuthGuardService] },
                     { path: 'Reports/SubLedgerReport', component: SubLedgerReportComponent, canActivate: [AuthGuardService] },
+                    { path: 'Reports/EmployeeFinancial360', component: EmployeeFinancial360Component, canActivate: [AuthGuardService] },
                     { path: 'Reports/AccountHeadDetailReport', component: AccountHeadDetailReportComponent, canActivate: [AuthGuardService] },
                     // {
                     //     path: 'Insurance', component: InsuranceMainComponent, canActivate: [AuthGuardService],

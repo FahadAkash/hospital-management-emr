@@ -26,6 +26,7 @@ import { CashBankBookReportComponent } from './reports/cash-bank-book-report/cas
 import { DailyTransactionReportComponent } from './reports/daily-transaction/daily-transaction-report.component';
 import { DaywiseVoucherDetailsComponent } from './reports/daywise-voucher-report/daywise-voucher-details.component';
 import { DaywiseVoucherReportComponent } from './reports/daywise-voucher-report/daywise-voucher-report.component';
+import { EmployeeFinancial360Component } from './reports/employee-financial-360/employee-financial-360.component';
 import { GroupStatementReportComponent } from './reports/group-statement-report/group-statement-report.component';
 import { LedgerReportComponent } from './reports/ledger-report/ledger-report.component';
 import { ProfitLossReportComponent } from './reports/profit-loss/profit-loss-report.component';
@@ -95,6 +96,7 @@ import { VoucherVerificationComponent } from './voucher-verification/voucher-ver
     CashBankBookReportComponent,
     DayBookReportComponent,
     SubLedgerReportComponent,
+    EmployeeFinancial360Component,
     VoucherVerificationComponent,
     BankReconciliationMainComponent,
     SuspenseAccountReconciliationComponent,

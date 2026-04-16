@@ -1,0 +1,123 @@
+<div class="caption custom-caption top-report-section">
+  <h3><i class="fa fa-user-md"></i> <span class="caption-subject">Employee Financial 360</span></h3>
+</div>
+
+<div class="row" style="background:#f7f9fc;padding:10px;border:1px solid #d9e2ef;">
+  <div class="col-md-4">
+    <label>Select Fiscal Year / Date Range</label>
+    <fiscal-year-calendar [showSingleDatePicker]="false" [showAllFiscalYear]="true" (fiscalYearDate)="selectDate($event)"></fiscal-year-calendar>
+  </div>
+  <div class="col-md-4">
+    <label>Select Doctor / Employee</label>
+    <input danphe-auto-complete [(ngModel)]="selectedEmployee" [source]="employees"
+           placeholder="Search employee/doctor"
+           display-property-name="FullName"
+           value-property-name="FullName"
+           [list-formatter]="employeeListFormatter"
+           max-num-list="20"
+           class="form-control"
+           [ngModelOptions]="{standalone: true}" />
+  </div>
+  <div class="col-md-2">
+    <br />
+    <button class="btn green btn-success" (click)="loadEmployeeFinancials()" [disabled]="loading">
+      <i class="fa fa-refresh"></i> Load
+    </button>
+  </div>
+  <div class="col-md-2">
+    <br />
+    <span *ngIf="loading" style="color:#1d4ed8;"><i class="fa fa-spinner fa-spin"></i> Loading...</span>
+  </div>
+</div>
+
+<div *ngIf="transactions && transactions.length" style="margin-top:10px;">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="well">
+        <div><b>Total Debit</b></div>
+        <div>{{summary.TotalDebit | Currency:'4'}}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="well">
+        <div><b>Total Credit</b></div>
+        <div>{{summary.TotalCredit | Currency:'4'}}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="well">
+        <div><b>Net Balance (Dr-Cr)</b></div>
+        <div>{{summary.NetBalance | Currency:'4'}}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="well">
+        <div><b>Advance Given / Recovered</b></div>
+        <div>{{summary.AdvanceGiven | Currency:'4'}} / {{summary.AdvanceRecovered | Currency:'4'}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Monthly Payment Summary</h4>
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr style="background:#eef2ff;">
+            <th>Month</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of monthlySummary">
+            <td>{{m.Month}}</td>
+            <td>{{m.Debit | Currency:'4'}}</td>
+            <td>{{m.Credit | Currency:'4'}}</td>
+            <td>{{m.Balance | Currency:'4'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <h4>SubLedger Snapshot</h4>
+      <table class="table table-bordered">
+        <tbody>
+          <tr><th>Matched Ledgers</th><td>{{matchedLedgers.length}}</td></tr>
+          <tr><th>Matched SubLedgers</th><td>{{matchedSubLedgers.length}}</td></tr>
+          <tr><th>Opening (Dr / Cr)</th><td>{{subLedgerSummary.OpeningDr | Currency:'4'}} / {{subLedgerSummary.OpeningCr | Currency:'4'}}</td></tr>
+          <tr><th>Closing (Dr / Cr)</th><td>{{subLedgerSummary.ClosingDr | Currency:'4'}} / {{subLedgerSummary.ClosingCr | Currency:'4'}}</td></tr>
+          <tr><th>Payment Out / In</th><td>{{summary.PaymentOut | Currency:'4'}} / {{summary.PaymentIn | Currency:'4'}}</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:#64748b;">
+        This report consolidates accounting ledger and subledger activity for selected staff/doctor in selected period.
+      </p>
+    </div>
+  </div>
+
+  <h4>Transaction Details</h4>
+  <table class="table table-striped table-hover table-bordered">
+    <thead>
+      <tr style="background:#f1f5f9;">
+        <th>Date</th>
+        <th>Voucher No</th>
+        <th>Voucher Type</th>
+        <th>Description</th>
+        <th>Debit</th>
+        <th>Credit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of transactions">
+        <td>{{t.TransactionDate}}</td>
+        <td>{{t.VoucherNumber}}</td>
+        <td>{{t.VoucherName}}</td>
+        <td>{{t.Description}}</td>
+        <td>{{t.LedgerDr | Currency:'4'}}</td>
+        <td>{{t.LedgerCr | Currency:'4'}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

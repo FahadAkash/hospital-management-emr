@@ -47,6 +47,7 @@
     <li> <a [ngClass]="{'a-tab-active': showRadiologyDetails==true}" (click)="updateView(4)">Radiology Details</a></li>
     <li> <a [ngClass]="{'a-tab-active': showBillDetails==true}" (click)="updateView(5)">Bill Details</a></li>
     <li> <a [ngClass]="{'a-tab-active': showDocumentsDetails==true}" (click)="updateView(6)">Document Details</a></li>
+    <li> <a [ngClass]="{'a-tab-active': showDischargeSummary==true}" (click)="updateView(7)">Discharge Summary</a></li>
   </ul>
 </div>
 <div class="col-md-12">
@@ -215,5 +216,70 @@
     <patient-upload-files [isShowUploadMode]="isShowUploadMode"
                               [isShowListMode]="isShowListMode"
                               [patientId]="patientId"> </patient-upload-files>
+  </div>
+  <div *ngIf="showDischargeSummary">
+    <div class="table-responsive">
+      <div style="margin-bottom:10px;text-align:right;">
+        <button class="btn btn-primary btn-sm" (click)="printDischargeSummary()">Print Summary</button>
+      </div>
+      <div id="patient-discharge-summary-print">
+      <h4><b>Patient Discharge Summary</b></h4>
+      <table class="table table-bordered table-hover">
+        <tbody>
+          <tr style="background-color:whitesmoke">
+            <th>Total Admissions</th>
+            <td>{{dischargeSummary.TotalAdmissions}}</td>
+            <th>Bed Movements</th>
+            <td>{{dischargeSummary.BedMovementCount}}</td>
+            <th>Total Bed Days</th>
+            <td>{{dischargeSummary.TotalBedDays}}</td>
+          </tr>
+          <tr>
+            <th>Medicines Prescribed</th>
+            <td>{{dischargeSummary.TotalMedicines}}</td>
+            <th>Lab Test Components</th>
+            <td>{{dischargeSummary.TotalLabTests}}</td>
+            <th>Imaging Tests</th>
+            <td>{{dischargeSummary.TotalImagingTests}}</td>
+          </tr>
+          <tr style="background-color:whitesmoke">
+            <th>Bed/Ward Charges</th>
+            <td>{{dischargeSummary.BedCharges}}</td>
+            <th>Medicine Charges</th>
+            <td>{{dischargeSummary.MedicineCharges}}</td>
+            <th>Lab Charges</th>
+            <td>{{dischargeSummary.LabCharges}}</td>
+          </tr>
+          <tr>
+            <th>Radiology Charges</th>
+            <td>{{dischargeSummary.RadiologyCharges}}</td>
+            <th>Other Charges</th>
+            <td>{{dischargeSummary.OtherCharges}}</td>
+            <th>Total Bill Amount</th>
+            <td>{{totalBillAmount}}</td>
+          </tr>
+          <tr style="background-color:whitesmoke">
+            <th>Paid Amount</th>
+            <td>{{paidAmount}}</td>
+            <th>Unpaid Amount</th>
+            <td>{{unpaidBillAmount}}</td>
+            <th>Discount</th>
+            <td>{{discountAmount}}</td>
+          </tr>
+          <tr>
+            <th>Deposit Balance</th>
+            <td>{{depositAmount}}</td>
+            <th>Returned Amount</th>
+            <td>{{returnedAmount}}</td>
+            <th>Net Receivable (Due - Deposit)</th>
+            <td><b>{{dischargeSummary.NetReceivable}}</b></td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:#64748b;">
+        Charge categorization is derived from billing Department/Item names. Use Bill Details for line-level verification.
+      </p>
+      </div>
+    </div>
   </div>
 </div>
