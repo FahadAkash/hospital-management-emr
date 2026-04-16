@@ -1,0 +1,37 @@
+# Dependencies
+**/node_modules/
+**/packages/
+**/bin/
+**/obj/
+
+# IDE files
+**/.vs/
+**/.vscode/
+*.user
+*.lock
+package-lock.json
+
+# Build output
+**/dist/
+**/out/
+
+# Logs
+*.log
+
+# Databases and backups
+/Database/*.bak
+/Database/*.zip
+/Database/2. EMR-Db/DanpheInternationalDB/Dev_DanpheEMR_INT1.bak
+/Database/2. EMR-Db/DanpheInternationalDB/Dev_DanpheEMR_INT1.zip
+
+# Misc
+*.rar
+*.zip
+*.bak
+/Code/Websites/DanpheEMR/DanpheEmrAPI.xml
+/Code/Websites/DanpheEMR/appsettings.json
+bitsum-pipelines.yml
+docker-compose.yml
+fix_cascade.csx
+status
+/Code/Solutions/global.json
