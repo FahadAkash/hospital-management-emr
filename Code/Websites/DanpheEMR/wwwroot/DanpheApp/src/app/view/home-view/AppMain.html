@@ -155,11 +155,41 @@
     background: #ffffff !important;
     box-shadow: none !important;
     border-right: 1px solid #e5e7eb !important;
+    transition: width 120ms ease;
+  }
+
+  .page-sidebar-wrapper {
+    position: relative;
+    transition: width 120ms ease;
+  }
+
+  .page-content-wrapper {
+    transition: margin-left 120ms ease;
+  }
+
+  .sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 12;
+    background: transparent;
+  }
+
+  .sidebar-resizer:hover {
+    background: rgba(59, 130, 246, 0.18);
+  }
+
+  body.sidebar-resizing {
+    user-select: none;
+    cursor: col-resize !important;
   }
 
   .page-sidebar-wrapper .page-sidebar .cstm-sidebar.page-sidebar-menu {
     background: transparent !important;
-    padding: 8px 10px 12px 10px !important;
+    padding: 10px 12px 14px 12px !important;
   }
 
   .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper {
@@ -176,12 +206,12 @@
   }
 
   .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control {
-    border-radius: 10px !important;
-    height: 38px;
+    border-radius: 12px !important;
+    height: 40px;
     border: 1px solid #e5e7eb;
     background: #f9fafb;
     padding-left: 36px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control:focus {
@@ -190,16 +220,27 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   }
 
+  .page-sidebar-wrapper .page-sidebar .menu-section-title {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.7;
+    margin: 14px 8px 6px 8px;
+    color: inherit;
+  }
+
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: 18px 1fr 14px;
     align-items: center !important;
-    gap: 10px;
-    border-radius: 10px !important;
-    padding: 10px 12px !important;
-    margin: 4px 0 !important;
+    column-gap: 10px;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+    margin: 2px 0 !important;
     background: transparent !important;
     color: #111827 !important;
-    border-left: 3px solid transparent !important;
+    border-left: 2px solid transparent !important;
     transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
     box-shadow: none !important;
   }
@@ -215,7 +256,7 @@
     width: 18px;
     min-width: 18px;
     text-align: center;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1;
     color: #6b7280;
   }
@@ -227,8 +268,12 @@
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .title {
     font-weight: 600;
-    letter-spacing: 0.1px;
+    font-size: 14px;
+    letter-spacing: 0.05px;
     color: inherit !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a:hover {
@@ -244,24 +289,27 @@
   }
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu {
-    margin: 6px 0 10px 30px !important;
-    padding: 6px !important;
-    border-left: none !important;
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 12px !important;
+    margin: 2px 0 8px 22px !important;
+    padding: 2px 0 !important;
+    border-left: 1px solid rgba(148, 163, 184, 0.25) !important;
+    background: transparent !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
   }
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a {
-    border-radius: 10px !important;
-    padding: 8px 10px !important;
-    margin: 2px 0 !important;
-    color: #374151 !important;
+    border-radius: 6px !important;
+    padding: 6px 8px !important;
+    margin: 1px 0 1px 6px !important;
+    color: #4b5563 !important;
     background: transparent !important;
     opacity: 1 !important;
     display: block;
-    border-left: 3px solid transparent;
+    border-left: 2px solid transparent;
+    font-size: 13px;
   }
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a:hover {
@@ -270,16 +318,17 @@
   }
 
   .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a.left-nav-active {
-    background: #e8f1ff !important;
+    background: rgba(59, 130, 246, 0.1) !important;
     color: #1d4ed8 !important;
-    border-left-color: #3b82f6;
+    border-left-color: #60a5fa;
   }
 
   /* cleaner expand/collapse chevron */
   span.ad-sign:after {
     color: #9ca3af !important;
-    top: 12px;
-    right: 10px;
+    top: 9px;
+    right: 4px;
+    font-size: 11px;
   }
 
   /* Make sidebar scroll look modern (where supported) */
@@ -288,12 +337,12 @@
     scrollbar-color: #cbd5e1 transparent;
   }
   .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar {
-    width: 10px;
+    width: 7px;
   }
   .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-    border: 3px solid transparent;
+    background: #d3dce8;
+    border-radius: 8px;
+    border: 2px solid transparent;
     background-clip: content-box;
   }
   .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-track {
@@ -465,11 +514,11 @@
     <div [ngClass]="navService.showTopNav ? 'page-container':'' ">
 
       <!-- BEGIN SIDEBAR -->
-      <div *ngIf="navService.showSideNav" class="page-sidebar-wrapper">
+      <div *ngIf="navService.showSideNav" class="page-sidebar-wrapper" [style.width.px]="sidebarWidth">
         <!-- BEGIN SIDEBAR -->
         <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
         <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
-        <div class="page-sidebar navbar-collapse collapse">
+        <div class="page-sidebar navbar-collapse collapse" [style.width.px]="sidebarWidth">
           <!-- BEGIN SIDEBAR MENU -->
           <!-- DOC: Apply "page-sidebar-menu-light" class right after "page-sidebar-menu" to enable light sidebar menu style(without borders) -->
           <!-- DOC: Apply "page-sidebar-menu-hover-submenu" class right after "page-sidebar-menu" to enable hoverable(hover vs accordion) sub menu mode -->
@@ -484,12 +533,15 @@
                        (keyup)="FilterMenuItems()">
               </div>
             </li>
-            <li *ngFor="let route of validRoutes">
+            <ng-container *ngFor="let route of validRoutes; let i = index">
+            <li class="menu-section-title" *ngIf="getRouteSectionTitle(route, i)">{{ getRouteSectionTitle(route, i) }}</li>
+            <li>
               <a routerLink="{{route.RouterLink}}" [routerLinkActive]="'left-nav-active'">
                 <i class="fa nav-fa-icon" [ngClass]="getNavFaIcon(route)"></i>
-                <span class="title">{{route.DisplayName}}</span>
+                <span class="title">{{getDisplayLabel(route.DisplayName)}}</span>
                 <span class="selected"></span>
-                <span data-toggle="collapse" attr.data-target="#{{route.DisplayName}}" class="collapsed ad-sign"></span>
+                <span *ngIf="route.ChildRoutes !=null && route.ChildRoutesDefaultShowCount >0"
+                      data-toggle="collapse" attr.data-target="#{{route.DisplayName}}" class="collapsed ad-sign"></span>
               </a>
               <ng-container *ngIf="route.ChildRoutes !=null && route.ChildRoutesDefaultShowCount >0">
                 <ul class="sub-menu collapse" id={{route.DisplayName}}>
@@ -498,7 +550,7 @@
                         *ngIf="(childroute != null && childroute.DisplayName.length >0) && childroute.DefaultShow != false">
                       <a routerLink="{{childroute.UrlFullPath}}" class="nav-link"
                          [routerLinkActive]="'left-nav-active'">
-                        <span class="title">{{childroute.DisplayName}}</span>
+                        <span class="title">{{getDisplayLabel(childroute.DisplayName)}}</span>
                         <span class="badge badge-success"></span>
                       </a>
                     </li>
@@ -506,6 +558,7 @@
                 </ul>
               </ng-container>
             </li>
+            </ng-container>
 
             <!-- <li>
               <a [routerLink]="'SSU'" [routerLinkActive]="'left-nav-active'">
@@ -519,11 +572,12 @@
           <!-- END SIDEBAR MENU -->
           <!-- END SIDEBAR MENU -->
         </div>
+        <div class="sidebar-resizer" (mousedown)="startSidebarResize($event)"></div>
         <!-- END SIDEBAR -->
       </div>
       <!-- END SIDEBAR -->
       <!-- BEGIN CONTENT -->
-      <div class="page-content-wrapper">
+      <div class="page-content-wrapper" [style.margin-left.px]="navService.showSideNav ? sidebarWidth : 0">
 
         <!-- BEGIN CONTENT BODY -->
         <!-- <danphe-loading [loading]="loading"></danphe-loading> -->

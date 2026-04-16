@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef, Component, ElementRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy } from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -34,7 +34,7 @@ import { ENUM_CalendarTypes, ENUM_DanpheHTTPResponses, ENUM_LocalStorageKeys, EN
 })
 
 // App Component class--this is MainComponent from earlier..
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   public http: HttpClient;
   public PatService: PatientService;
   public currentUsr: User = new User();
@@ -50,6 +50,14 @@ export class AppComponent {
   public allValidRoutes: Array<DanpheRoute> = new Array<DanpheRoute>();
   public defaultCal = "";
   public EnableEnglishCalendarOnly: boolean = false;
+  public sidebarWidth: number = 260;
+  private minSidebarWidth: number = 220;
+  private maxSidebarWidth: number = 420;
+  private isSidebarResizing: boolean = false;
+  private sidebarResizeStartX: number = 0;
+  private sidebarResizeStartWidth: number = 0;
+  private mouseMoveHandler: any = null;
+  private mouseUpHandler: any = null;
 
   private readonly navFallbackSvgDataUri: string =
     "data:image/svg+xml;charset=UTF-8," +
@@ -245,6 +253,42 @@ export class AppComponent {
     return 'fa-circle-o';
   }
 
+  public getDisplayLabel(label: string): string {
+    if (!label) { return ''; }
+    const trimmed = (label + '').trim();
+    if (!trimmed) { return ''; }
+    const customMap: { [k: string]: string } = {
+      SocialService: 'Social Service',
+      DynamicReport: 'Dynamic Report',
+      ClaimMgmt: 'Claim Mgmt',
+      QueueMngmt: 'Queue Mgmt',
+      MktReferral: 'Mkt Referral',
+      OperationTheatre: 'Operation Theatre'
+    };
+    if (customMap[trimmed]) {
+      return customMap[trimmed];
+    }
+    return trimmed
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  public getRouteSectionTitle(route: any, index: number): string {
+    const current = this.mapRouteToSection(route);
+    const prev = index > 0 ? this.mapRouteToSection(this.validRoutes[index - 1]) : '';
+    return index === 0 || current !== prev ? current : '';
+  }
+
+  private mapRouteToSection(route: any): string {
+    const key = ((route && route.DisplayName) ? route.DisplayName : '').toLowerCase();
+    if (key.indexOf('report') > -1) { return 'Reports'; }
+    if (key.indexOf('billing') > -1 || key.indexOf('account') > -1 || key.indexOf('claim') > -1) { return 'Finance'; }
+    if (key.indexOf('appointment') > -1 || key.indexOf('patient') > -1 || key.indexOf('doctor') > -1 || key.indexOf('emergency') > -1) { return 'Clinical'; }
+    if (key.indexOf('inventory') > -1 || key.indexOf('procurement') > -1 || key.indexOf('laboratory') > -1 || key.indexOf('radiology') > -1 || key.indexOf('adt') > -1 || key.indexOf('dispensary') > -1) { return 'Operations'; }
+    return 'General';
+  }
+
   private buildNavIconCandidates(route: any): string[] {
     const cssRaw = route && route.Css != null ? (route.Css + '').trim() : '';
     if (!cssRaw) { return []; }
@@ -312,6 +356,52 @@ export class AppComponent {
   public loadingScreen: boolean = false; //default not showing loading screen
   ngAfterViewChecked() {
     this.changeDetector.detectChanges();
+  }
+
+  ngOnDestroy() {
+    this.detachSidebarResizeListeners();
+  }
+
+  public startSidebarResize(event: MouseEvent): void {
+    if (!this.navService.showSideNav) {
+      return;
+    }
+    this.isSidebarResizing = true;
+    this.sidebarResizeStartX = event.clientX;
+    this.sidebarResizeStartWidth = this.sidebarWidth;
+    document.body.classList.add('sidebar-resizing');
+
+    this.mouseMoveHandler = (ev: MouseEvent) => this.onSidebarResize(ev);
+    this.mouseUpHandler = () => this.stopSidebarResize();
+    document.addEventListener('mousemove', this.mouseMoveHandler);
+    document.addEventListener('mouseup', this.mouseUpHandler);
+    event.preventDefault();
+  }
+
+  private onSidebarResize(event: MouseEvent): void {
+    if (!this.isSidebarResizing) {
+      return;
+    }
+    const deltaX = event.clientX - this.sidebarResizeStartX;
+    const nextWidth = this.sidebarResizeStartWidth + deltaX;
+    this.sidebarWidth = Math.max(this.minSidebarWidth, Math.min(this.maxSidebarWidth, nextWidth));
+  }
+
+  private stopSidebarResize(): void {
+    this.isSidebarResizing = false;
+    document.body.classList.remove('sidebar-resizing');
+    this.detachSidebarResizeListeners();
+  }
+
+  private detachSidebarResizeListeners(): void {
+    if (this.mouseMoveHandler) {
+      document.removeEventListener('mousemove', this.mouseMoveHandler);
+      this.mouseMoveHandler = null;
+    }
+    if (this.mouseUpHandler) {
+      document.removeEventListener('mouseup', this.mouseUpHandler);
+      this.mouseUpHandler = null;
+    }
   }
 
   SetLoginTokenToLocalStorage(): void {

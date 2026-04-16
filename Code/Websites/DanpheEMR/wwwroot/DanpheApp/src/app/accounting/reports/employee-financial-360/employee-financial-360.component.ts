@@ -1,3 +1,4 @@
+import { HttpClient } from "@angular/common/http";
 import { Component } from "@angular/core";
 import * as moment from "moment/moment";
 import { MessageboxService } from "../../../shared/messagebox/messagebox.service";
@@ -18,7 +19,9 @@ export class EmployeeFinancial360Component {
   public validDate: boolean = true;
 
   public employees: any[] = [];
+  public displayedEmployees: any[] = [];
   public selectedEmployee: any = null;
+  public roleFilter: string = "all";
 
   public matchedLedgers: any[] = [];
   public matchedSubLedgers: any[] = [];
@@ -32,7 +35,10 @@ export class EmployeeFinancial360Component {
     PaymentOut: 0,
     PaymentIn: 0,
     AdvanceGiven: 0,
-    AdvanceRecovered: 0
+    AdvanceRecovered: 0,
+    SalaryTotal: 0,
+    DeductionTotal: 0,
+    NetSalaryTotal: 0
   };
 
   public subLedgerSummary = {
@@ -43,11 +49,13 @@ export class EmployeeFinancial360Component {
   };
 
   public loading: boolean = false;
+  public payrollMergeStatus: string = "";
 
   constructor(
     public accountingReportsBLService: AccountingReportsBLService,
     public accountingSettingsBLService: AccountingSettingsBLService,
     public accountingService: AccountingService,
+    public http: HttpClient,
     public msgBoxServ: MessageboxService
   ) {
     this.loadEmployees();
@@ -107,7 +115,7 @@ export class EmployeeFinancial360Component {
           this.transactions = result || [];
           this.calculateSummary();
           this.calculateMonthlySummary();
-          this.loadSubLedgerSummary(employeeName);
+          this.loadSubLedgerSummary(employeeName, () => this.mergePayrollMonthlyData());
         } else {
           this.loading = false;
           this.msgBoxServ.showMessage("warning", ["No transactions found for selected employee in given date range."]);
@@ -120,20 +128,90 @@ export class EmployeeFinancial360Component {
     );
   }
 
+  public applyRoleFilter(): void {
+    if (!this.employees || !this.employees.length) {
+      this.displayedEmployees = [];
+      return;
+    }
+    if (this.roleFilter === "doctors") {
+      this.displayedEmployees = this.employees.filter(e => this.isDoctor(e));
+    } else if (this.roleFilter === "employees") {
+      this.displayedEmployees = this.employees.filter(e => !this.isDoctor(e));
+    } else {
+      this.displayedEmployees = this.employees.slice();
+    }
+  }
+
+  public exportToExcel(): void {
+    if (!this.transactions || !this.transactions.length) {
+      this.msgBoxServ.showMessage("warning", ["No data to export."]);
+      return;
+    }
+    const lines: string[] = [];
+    lines.push(`Employee Financial 360`);
+    lines.push(`From,${this.fromDate},To,${this.toDate}`);
+    lines.push(`Employee,${this.getEmployeeName(this.selectedEmployee)}`);
+    lines.push(``);
+    lines.push(`Monthly Summary`);
+    lines.push(`Month,Debit,Credit,Balance,Salary,Deductions,Net Payable`);
+    this.monthlySummary.forEach(m => {
+      lines.push(`${m.Month},${m.Debit || 0},${m.Credit || 0},${m.Balance || 0},${m.SalaryAmount || 0},${m.DeductionAmount || 0},${m.NetPayable || 0}`);
+    });
+    lines.push(``);
+    lines.push(`Transaction Details`);
+    lines.push(`Date,Voucher No,Voucher Type,Description,Debit,Credit`);
+    this.transactions.forEach(t => {
+      const desc = ((t.Description || "") + "").replace(/,/g, " ");
+      lines.push(`${t.TransactionDate || ""},${t.VoucherNumber || ""},${t.VoucherName || ""},${desc},${t.LedgerDr || 0},${t.LedgerCr || 0}`);
+    });
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `employee-financial-360-${moment().format("YYYYMMDD-HHmm")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  public printReport(): void {
+    const root = document.getElementById("employee-financial-360-print");
+    if (!root) {
+      this.msgBoxServ.showMessage("error", ["Printable section not found."]);
+      return;
+    }
+    const popup = window.open("", "_blank", "width=1100,height=750,scrollbars=yes");
+    if (!popup) {
+      this.msgBoxServ.showMessage("error", ["Unable to open print window."]);
+      return;
+    }
+    popup.document.open();
+    popup.document.write(
+      `<html><head><title>Employee Financial 360</title>` +
+      `<link rel="stylesheet" type="text/css" href="../../../assets/global/plugins/bootstrap/css/bootstrap.min.css"/>` +
+      `</head><body onload="window.print()">${root.innerHTML}</body></html>`
+    );
+    popup.document.close();
+  }
+
   private loadEmployees(): void {
     this.accountingSettingsBLService.GetEmployeeList().subscribe(
       res => {
         if (res && res.Status === "OK") {
           this.employees = res.Results || [];
+          this.applyRoleFilter();
         }
       },
       () => {
         this.employees = [];
+        this.displayedEmployees = [];
       }
     );
   }
 
-  private loadSubLedgerSummary(employeeName: string): void {
+  private loadSubLedgerSummary(employeeName: string, done?: () => void): void {
     this.accountingSettingsBLService.GetSubLedger().subscribe(
       res => {
         const allSubledgers = (res && res.Status === "OK" && res.Results) ? res.Results : [];
@@ -141,6 +219,7 @@ export class EmployeeFinancial360Component {
 
         if (!this.matchedSubLedgers.length) {
           this.loading = false;
+          if (done) { done(); }
           return;
         }
 
@@ -169,11 +248,18 @@ export class EmployeeFinancial360Component {
               this.subLedgerSummary.ClosingCr = closingTotal < 0 ? Math.abs(closingTotal) : 0;
             }
             this.loading = false;
+            if (done) { done(); }
           },
-          () => { this.loading = false; }
+          () => {
+            this.loading = false;
+            if (done) { done(); }
+          }
         );
       },
-      () => { this.loading = false; }
+      () => {
+        this.loading = false;
+        if (done) { done(); }
+      }
     );
   }
 
@@ -217,7 +303,7 @@ export class EmployeeFinancial360Component {
     this.transactions.forEach(txn => {
       const monthKey = this.getMonthKey(txn.TransactionDate);
       if (!monthMap[monthKey]) {
-        monthMap[monthKey] = { Month: monthKey, Debit: 0, Credit: 0 };
+        monthMap[monthKey] = { Month: monthKey, Debit: 0, Credit: 0, SalaryAmount: 0, DeductionAmount: 0, NetPayable: 0, PayrollMerged: false };
       }
       monthMap[monthKey].Debit += this.toNumber(txn.LedgerDr);
       monthMap[monthKey].Credit += this.toNumber(txn.LedgerCr);
@@ -232,13 +318,99 @@ export class EmployeeFinancial360Component {
       });
   }
 
+  private mergePayrollMonthlyData(): void {
+    this.payrollMergeStatus = "";
+    if (!this.selectedEmployee || !this.monthlySummary.length) {
+      return;
+    }
+    const employeeId = this.selectedEmployee.EmployeeId || this.selectedEmployee.EmpId || this.selectedEmployee.Id;
+    if (!employeeId) {
+      this.payrollMergeStatus = "Payroll merge skipped: selected employee id not found.";
+      return;
+    }
+
+    const monthKeys = this.monthlySummary.map(m => m.Month);
+    if (!monthKeys.length) { return; }
+
+    this.payrollMergeStatus = "Merging monthly salary and deductions...";
+    this.mergePayrollForMonthAtIndex(0, monthKeys, employeeId, false);
+  }
+
+  private mergePayrollForMonthAtIndex(index: number, monthKeys: string[], employeeId: number, gotAny: boolean): void {
+    if (index >= monthKeys.length) {
+      this.finalizePayrollMerge(gotAny);
+      return;
+    }
+
+    const monthKey = monthKeys[index];
+    const year = monthKey.split("-")[0];
+    const month = monthKey.split("-")[1];
+    this.http.get<any>(`/api/Payroll?reqType=get-emp-list&Year=${year}&Month=${month}&CurrEmpId=${employeeId}`)
+      .subscribe(
+        res => {
+          let hasData = gotAny;
+          if (res && res.Status === "OK" && res.Results && res.Results.length) {
+            const row = this.pickPayrollRow(res.Results, employeeId);
+            if (row) {
+              const monthRow = this.monthlySummary.find(m => m.Month === monthKey);
+              if (monthRow) {
+                monthRow.SalaryAmount = this.firstNumeric(row, ["GrossSalary", "GrossAmount", "Salary", "MonthlySalary", "BasicSalary"]);
+                monthRow.DeductionAmount = this.firstNumeric(row, ["TotalDeduction", "DeductionAmount", "Deductions", "TaxDeduction"]);
+                monthRow.NetPayable = this.firstNumeric(row, ["NetPayable", "NetSalary", "NetAmount", "TakeHome"]);
+                monthRow.PayrollMerged = true;
+                hasData = true;
+              }
+            }
+          }
+          this.mergePayrollForMonthAtIndex(index + 1, monthKeys, employeeId, hasData);
+        },
+        () => this.mergePayrollForMonthAtIndex(index + 1, monthKeys, employeeId, gotAny)
+      );
+  }
+
+  private finalizePayrollMerge(hasData: boolean): void {
+    let salaryTotal = 0;
+    let deductionTotal = 0;
+    let netTotal = 0;
+    this.monthlySummary.forEach(m => {
+      salaryTotal += this.toNumber(m.SalaryAmount);
+      deductionTotal += this.toNumber(m.DeductionAmount);
+      netTotal += this.toNumber(m.NetPayable);
+    });
+    this.summary.SalaryTotal = salaryTotal;
+    this.summary.DeductionTotal = deductionTotal;
+    this.summary.NetSalaryTotal = netTotal;
+    this.payrollMergeStatus = hasData
+      ? "Payroll merged successfully for available months."
+      : "Payroll API is available but salary/deduction rows were not found for this date range.";
+  }
+
+  private pickPayrollRow(rows: any[], employeeId: number): any {
+    if (!rows || !rows.length) { return null; }
+    const exact = rows.find(r => (r.EmployeeId || r.EmpId || r.Id) == employeeId);
+    return exact || rows[0];
+  }
+
+  private firstNumeric(obj: any, keys: string[]): number {
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      const val = this.toNumber(obj && obj[k] != null ? obj[k] : 0);
+      if (val !== 0) { return val; }
+    }
+    return 0;
+  }
+
+  private isDoctor(emp: any): boolean {
+    const text = `${emp && (emp.Designation || "")} ${emp && (emp.EmployeeType || "")} ${emp && (emp.FullName || "")}`.toLowerCase();
+    return !!(emp && (emp.IsDoctor === true || text.indexOf("doctor") > -1 || text.indexOf("consultant") > -1));
+  }
+
   private getMonthKey(dateVal: string): string {
     if (!dateVal) { return "Unknown"; }
     const m = moment(dateVal, ["YYYY-MM-DD", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
     if (m.isValid()) {
       return m.format("YYYY-MM");
     }
-    // Fallback for non-standard date strings
     return (dateVal + "").substring(0, 7);
   }
 
@@ -263,7 +435,10 @@ export class EmployeeFinancial360Component {
       PaymentOut: 0,
       PaymentIn: 0,
       AdvanceGiven: 0,
-      AdvanceRecovered: 0
+      AdvanceRecovered: 0,
+      SalaryTotal: 0,
+      DeductionTotal: 0,
+      NetSalaryTotal: 0
     };
     this.subLedgerSummary = {
       OpeningDr: 0,
@@ -271,6 +446,7 @@ export class EmployeeFinancial360Component {
       ClosingDr: 0,
       ClosingCr: 0
     };
+    this.payrollMergeStatus = "";
   }
 }
 
