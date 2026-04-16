@@ -46,6 +46,8 @@ export class AppComponent {
   public showDatePopup: boolean = false;
   public empPre = { np: false, en: false };
   public selectedDatePref: string = "";
+  public searchString: string = "";
+  public allValidRoutes: Array<DanpheRoute> = new Array<DanpheRoute>();
   public defaultCal = "";
   public EnableEnglishCalendarOnly: boolean = false;
   constructor(public _http: HttpClient, _serv: PatientService,
@@ -319,7 +321,8 @@ export class AppComponent {
       .subscribe(res => {
         if (res.Status == 'OK') {
           this.securityService.validRouteList = res.Results;
-          this.validRoutes = this.securityService.GetAllValidRoutes();
+          this.allValidRoutes = this.securityService.GetAllValidRoutes();
+          this.validRoutes = Object.assign([], this.allValidRoutes);
           //  this.securityService.validRouteList[0].ChildRoutes.filter(s => s.DefaultShow == true).length
 
         }
@@ -361,6 +364,17 @@ export class AppComponent {
   }
   logError(err: any) {
     console.log(err);
+  }
+
+  public FilterMenuItems() {
+    if (this.searchString && this.searchString.trim() != "") {
+      this.validRoutes = this.allValidRoutes.filter(r =>
+        r.DisplayName.toLowerCase().includes(this.searchString.toLowerCase()) ||
+        (r.ChildRoutes && r.ChildRoutes.some(c => c.DisplayName.toLowerCase().includes(this.searchString.toLowerCase())))
+      );
+    } else {
+      this.validRoutes = Object.assign([], this.allValidRoutes);
+    }
   }
 
 

@@ -69,6 +69,50 @@
   span.title {
     font-weight: normal;
   }
+
+  .sidebar-search-wrapper {
+    padding: 15px 12px;
+    background-color: transparent;
+    transition: all 0.3s;
+  }
+
+  .page-sidebar-menu-closed .sidebar-search-wrapper {
+    display: none !important;
+  }
+
+  .sidebar-search-wrapper .input-group {
+    width: 100%;
+    position: relative;
+  }
+
+  .sidebar-search-wrapper .form-control {
+    height: 34px;
+    border-radius: 20px !important;
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    padding-left: 35px;
+    font-size: 13px;
+    color: #555;
+    width: 100%;
+    box-shadow: none;
+    transition: width 0.3s;
+  }
+
+  .sidebar-search-wrapper .form-control:focus {
+    border-color: #337ab7;
+    box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
+  }
+
+  .sidebar-search-wrapper::before {
+    content: '\f002';
+    font-family: 'FontAwesome';
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    z-index: 10;
+  }
 </style>
 
 <div class="page-header-fixed page-sidebar-closed-hide-logo page-content-white">
@@ -249,6 +293,12 @@
           <!-- DOC: Set data-keep-expand="true" to keep the submenues expanded -->
           <!-- DOC: Set data-auto-speed="200" to adjust the sub menu slide up/down speed -->
           <ul class="menu-content out page-sidebar-menu cstm-sidebar" style="padding-top: 0px">
+            <li class="sidebar-search-wrapper">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search Menu..." [(ngModel)]="searchString"
+                       (keyup)="FilterMenuItems()">
+              </div>
+            </li>
             <li *ngFor="let route of validRoutes">
               <a routerLink="{{route.RouterLink}}" [routerLinkActive]="'left-nav-active'">
                 <img src="/themes/theme-default/images/nav/{{route.Css}}" style="height: 25px;width: 30px;" />

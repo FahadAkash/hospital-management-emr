@@ -1,4 +1,4 @@
-﻿@using System;
+@using System;
 @using System.Collections.Generic;
 @using System.Linq;
 @using System.Text;
@@ -80,8 +80,52 @@
         padding: 7px 15px 7px 8px;
     }
     .form-control {
-    background-color: #fbfbfb;
-    border: 1px solid rgba(0,0,0,.2);
+        background-color: #fbfbfb;
+        border: 1px solid rgba(0,0,0,.2);
+    }
+
+    .sidebar-search-wrapper {
+        padding: 15px 12px;
+        background-color: transparent;
+        transition: all 0.3s;
+    }
+
+    .page-sidebar-menu-closed .sidebar-search-wrapper {
+        display: none !important;
+    }
+
+    .sidebar-search-wrapper .input-group {
+        width: 100%;
+        position: relative;
+    }
+
+    .sidebar-search-wrapper .form-control {
+        height: 34px;
+        border-radius: 20px !important;
+        background: #ffffff;
+        border: 1px solid #e1e1e1;
+        padding-left: 35px;
+        font-size: 13px;
+        color: #555;
+        width: 100%;
+        box-shadow: none;
+        transition: width 0.3s;
+    }
+
+    .sidebar-search-wrapper .form-control:focus {
+        border-color: #337ab7;
+        box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
+    }
+
+    .sidebar-search-wrapper:before {
+        content: '\f002';
+        font-family: 'FontAwesome';
+        position: absolute;
+        left: 25px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        z-index: 10;
     }
 </style>
 
@@ -216,6 +260,11 @@
                     <!-- DOC: Set data-keep-expand="true" to keep the submenues expanded -->
                     <!-- DOC: Set data-auto-speed="200" to adjust the sub menu slide up/down speed -->
                     <ul class="menu-content out page-sidebar-menu" style="padding-top: 0px">
+                        <li class="sidebar-search-wrapper">
+                            <div class="input-group">
+                                <input type="text" id="sidebar-search-razor" class="form-control" placeholder="Search Menu..." onkeyup="filterSidebarMenu()">
+                            </div>
+                        </li>
                         <!-- DOC: To remove the sidebar toggler from the sidebar you just need to completely remove the below "sidebar-toggler-wrapper" LI element -->
                         <!-- BEGIN SIDEBAR TOGGLER BUTTON -->
                         @*
@@ -292,4 +341,42 @@
         <!-- BEGIN FOOTER -->
         <!-- END FOOTER -->
     </div>
+    <script>
+        function filterSidebarMenu() {
+            var input = document.getElementById('sidebar-search-razor');
+            var filter = input.value.toLowerCase();
+            var menu = document.querySelector('.page-sidebar-menu');
+            var items = menu.querySelectorAll('li:not(.sidebar-search-wrapper)');
+
+            items.forEach(function (item) {
+                var titleElement = item.querySelector('.title');
+                if (!titleElement) return;
+                
+                var titleText = titleElement.innerText.toLowerCase();
+                var subMenu = item.querySelector('.sub-menu');
+                var matchFound = titleText.includes(filter);
+
+                if (subMenu) {
+                    var subItems = subMenu.querySelectorAll('li');
+                    var childMatch = false;
+                    subItems.forEach(function (subItem) {
+                        var subTitle = subItem.querySelector('.title').innerText.toLowerCase();
+                        if (subTitle.includes(filter)) {
+                            childMatch = true;
+                            subItem.style.display = "";
+                        } else {
+                            subItem.style.display = "none";
+                        }
+                    });
+                    if (childMatch) matchFound = true;
+                }
+
+                if (matchFound) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+    </script>
 </body>
