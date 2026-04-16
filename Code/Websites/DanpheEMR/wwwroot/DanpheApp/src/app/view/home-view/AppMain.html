@@ -113,6 +113,156 @@
     color: #999;
     z-index: 10;
   }
+
+  /* ===== Modern flat sidebar overrides (scoped) ===== */
+  .page-sidebar-wrapper .page-sidebar {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border-right: 1px solid #e5e7eb !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .cstm-sidebar.page-sidebar-menu {
+    background: transparent !important;
+    padding: 8px 10px 12px 10px !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper {
+    padding: 12px 10px 10px 10px !important;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 2;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper::before {
+    left: 22px;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control {
+    border-radius: 10px !important;
+    height: 38px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding-left: 36px;
+    font-size: 13px;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control:focus {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    margin: 4px 0 !important;
+    background: transparent !important;
+    color: #111827 !important;
+    border-left: 3px solid transparent !important;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    box-shadow: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a img {
+    height: 18px !important;
+    width: 18px !important;
+    margin: 0 !important;
+    opacity: 0.9;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .nav-fa-icon {
+    width: 18px;
+    min-width: 18px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active .nav-fa-icon,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a .nav-fa-icon {
+    color: #1d4ed8;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .title {
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    color: inherit !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a {
+    background: #e8f1ff !important;
+    border-left-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu {
+    margin: 6px 0 10px 30px !important;
+    padding: 6px !important;
+    border-left: none !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a {
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+    margin: 2px 0 !important;
+    color: #374151 !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    display: block;
+    border-left: 3px solid transparent;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a.left-nav-active {
+    background: #e8f1ff !important;
+    color: #1d4ed8 !important;
+    border-left-color: #3b82f6;
+  }
+
+  /* cleaner expand/collapse chevron */
+  span.ad-sign:after {
+    color: #9ca3af !important;
+    top: 12px;
+    right: 10px;
+  }
+
+  /* Make sidebar scroll look modern (where supported) */
+  .page-sidebar-wrapper .page-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar {
+    width: 10px;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
 </style>
 
 <div class="page-header-fixed page-sidebar-closed-hide-logo page-content-white">
@@ -300,7 +450,7 @@
             </li>
             <li *ngFor="let route of validRoutes">
               <a routerLink="{{route.RouterLink}}" [routerLinkActive]="'left-nav-active'">
-                <img src="/themes/theme-default/images/nav/{{route.Css}}" style="height: 25px;width: 30px;" />
+                <i class="fa nav-fa-icon" [ngClass]="getNavFaIcon(route)"></i>
                 <span class="title">{{route.DisplayName}}</span>
                 <span class="selected"></span>
                 <span data-toggle="collapse" attr.data-target="#{{route.DisplayName}}" class="collapsed ad-sign"></span>

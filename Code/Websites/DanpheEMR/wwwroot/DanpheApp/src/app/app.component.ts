@@ -50,6 +50,15 @@ export class AppComponent {
   public allValidRoutes: Array<DanpheRoute> = new Array<DanpheRoute>();
   public defaultCal = "";
   public EnableEnglishCalendarOnly: boolean = false;
+
+  private readonly navFallbackSvgDataUri: string =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20">
+        <rect x="1" y="1" width="18" height="18" rx="4" fill="#E5E7EB"/>
+        <path d="M6 7h8v2H6V7zm0 4h8v2H6v-2z" fill="#9CA3AF"/>
+      </svg>`
+    );
   constructor(public _http: HttpClient, _serv: PatientService,
     public router: Router,
     public VisService: VisitService,
@@ -169,6 +178,132 @@ export class AppComponent {
     this.GetPaymentPages();
     this.GetMembershipTypeVsPriceCategoryMapping();
     this.GetSchemeList();
+  }
+
+  public getNavIconUrl(route: any): string {
+    const candidates = this.buildNavIconCandidates(route);
+    // Always start with the first candidate.
+    const first = candidates && candidates.length ? candidates[0] : null;
+    return first ? `/themes/theme-default/images/nav/${first}` : this.navFallbackSvgDataUri;
+  }
+
+  public getNavIconCandidates(route: any): string {
+    const candidates = this.buildNavIconCandidates(route);
+    return (candidates && candidates.length) ? candidates.join('|') : '';
+  }
+
+  public onNavIconError(ev: any): void {
+    try {
+      const img = ev && ev.target ? ev.target : null;
+      if (!img) { return; }
+
+      const candidatesRaw = img.dataset ? (img.dataset.iconCandidates || '') : '';
+      const candidates = candidatesRaw ? candidatesRaw.split('|').filter(x => !!x) : [];
+      const currentIndex = img.dataset && img.dataset.iconIndex ? parseInt(img.dataset.iconIndex, 10) : 0;
+      const nextIndex = isNaN(currentIndex) ? 1 : (currentIndex + 1);
+
+      if (candidates && nextIndex < candidates.length) {
+        if (img.dataset) { img.dataset.iconIndex = nextIndex.toString(); }
+        img.src = `/themes/theme-default/images/nav/${candidates[nextIndex]}`;
+        return;
+      }
+
+      img.src = this.navFallbackSvgDataUri;
+    } catch (e) { }
+  }
+
+  public getNavFaIcon(route: any): string {
+    const name = (route && route.DisplayName ? (route.DisplayName + '') : '').trim().toLowerCase();
+    const link = (route && route.RouterLink ? (route.RouterLink + '') : '').trim().toLowerCase();
+    const key = name || link;
+
+    // Match by DisplayName first (what user sees)
+    if (key.includes('dispensary')) { return 'fa-medkit'; }
+    if (key.includes('socialservice') || key.includes('social service')) { return 'fa-users'; }
+    if (key.includes('operationtheatre') || key.includes('operation theatre') || key.includes('ot')) { return 'fa-stethoscope'; }
+    if (key.includes('dynamicreport') || key.includes('dynamic report') || key.includes('report builder')) { return 'fa-bar-chart'; }
+    if (key.includes('doctor')) { return 'fa-user-md'; }
+    if (key.includes('appointment')) { return 'fa-calendar'; }
+    if (key.includes('patient')) { return 'fa-wheelchair'; }
+    if (key.includes('procurement')) { return 'fa-truck'; }
+    if (key.includes('billing')) { return 'fa-credit-card'; }
+    if (key.includes('claim')) { return 'fa-file-text-o'; }
+    if (key.includes('utilities')) { return 'fa-wrench'; }
+    if (key.includes('mktreferral') || key.includes('referral') || key.includes('marketing')) { return 'fa-bullhorn'; }
+    if (key.includes('reports')) { return 'fa-file-text'; }
+    if (key.includes('laboratory') || key.includes('lab')) { return 'fa-flask'; }
+    if (key.includes('radiology') || key.includes('xray')) { return 'fa-picture-o'; }
+    if (key === 'adt' || key.includes('admission') || key.includes('adt')) { return 'fa-bed'; }
+    if (key.includes('vaccination') || key.includes('immun')) { return 'fa-shield'; }
+    if (key.includes('queue')) { return 'fa-random'; }
+    if (key.includes('inventory')) { return 'fa-cubes'; }
+    if (key.includes('accounting')) { return 'fa-calculator'; }
+    if (key.includes('emergency') || key.includes('er')) { return 'fa-ambulance'; }
+    if (key.includes('pharmacy')) { return 'fa-plus-square'; }
+    if (key.includes('nursing')) { return 'fa-heartbeat'; }
+    if (key.includes('settings') || key.includes('admin')) { return 'fa-cog'; }
+    return 'fa-circle-o';
+  }
+
+  private buildNavIconCandidates(route: any): string[] {
+    const cssRaw = route && route.Css != null ? (route.Css + '').trim() : '';
+    if (!cssRaw) { return []; }
+
+    const stripPath = cssRaw.replace(/^.*[\\/]/g, '');
+    const hasExt = /\.[a-z0-9]+$/i.test(stripPath);
+
+    const base = hasExt ? stripPath.replace(/\.[a-z0-9]+$/i, '') : stripPath;
+    const ext = hasExt ? stripPath.substring(stripPath.lastIndexOf('.') + 1) : '';
+
+    const variants: string[] = [];
+
+    // 1) exact as given
+    if (stripPath) { variants.push(stripPath); }
+
+    // 2) If no extension, try common ones (and case variants used in repo)
+    if (!hasExt) {
+      variants.push(`${stripPath}.png`);
+      variants.push(`${stripPath}.PNG`);
+      variants.push(`${stripPath}.svg`);
+      variants.push(`${stripPath}.SVG`);
+    } else if (ext) {
+      // 3) If extension exists, try swapping extension case (png/PNG etc)
+      const extLower = ext.toLowerCase();
+      const extUpper = ext.toUpperCase();
+      variants.push(`${base}.${extLower}`);
+      variants.push(`${base}.${extUpper}`);
+    }
+
+    // 4) try lowercase/uppercase base names
+    const lower = base.toLowerCase();
+    const upper = base.toUpperCase();
+    if (!hasExt) {
+      variants.push(`${lower}.png`);
+      variants.push(`${lower}.PNG`);
+      variants.push(`${upper}.png`);
+      variants.push(`${upper}.PNG`);
+    } else {
+      variants.push(`${lower}.${ext}`);
+      variants.push(`${upper}.${ext}`);
+    }
+
+    // 5) common capitalization (e.g. Inventory.png, MktReferral.png)
+    const title = base.length ? base.charAt(0).toUpperCase() + base.slice(1) : base;
+    if (!hasExt) {
+      variants.push(`${title}.png`);
+      variants.push(`${title}.PNG`);
+    } else {
+      variants.push(`${title}.${ext}`);
+    }
+
+    // Unique, stable order
+    const seen: any = {};
+    return variants.filter(v => {
+      const key = (v || '').trim();
+      if (!key || seen[key]) { return false; }
+      seen[key] = true;
+      return true;
+    });
   }
 
 
