@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef } from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -34,7 +34,7 @@ import { ENUM_CalendarTypes, ENUM_DanpheHTTPResponses, ENUM_LocalStorageKeys, EN
 })
 
 // App Component class--this is MainComponent from earlier..
-export class AppComponent implements OnDestroy {
+export class AppComponent {
   public http: HttpClient;
   public PatService: PatientService;
   public currentUsr: User = new User();
@@ -50,14 +50,6 @@ export class AppComponent implements OnDestroy {
   public allValidRoutes: Array<DanpheRoute> = new Array<DanpheRoute>();
   public defaultCal = "";
   public EnableEnglishCalendarOnly: boolean = false;
-  public sidebarWidth: number = 260;
-  private minSidebarWidth: number = 220;
-  private maxSidebarWidth: number = 420;
-  private isSidebarResizing: boolean = false;
-  private sidebarResizeStartX: number = 0;
-  private sidebarResizeStartWidth: number = 0;
-  private mouseMoveHandler: any = null;
-  private mouseUpHandler: any = null;
 
   private readonly navFallbackSvgDataUri: string =
     "data:image/svg+xml;charset=UTF-8," +
@@ -356,52 +348,6 @@ export class AppComponent implements OnDestroy {
   public loadingScreen: boolean = false; //default not showing loading screen
   ngAfterViewChecked() {
     this.changeDetector.detectChanges();
-  }
-
-  ngOnDestroy() {
-    this.detachSidebarResizeListeners();
-  }
-
-  public startSidebarResize(event: MouseEvent): void {
-    if (!this.navService.showSideNav) {
-      return;
-    }
-    this.isSidebarResizing = true;
-    this.sidebarResizeStartX = event.clientX;
-    this.sidebarResizeStartWidth = this.sidebarWidth;
-    document.body.classList.add('sidebar-resizing');
-
-    this.mouseMoveHandler = (ev: MouseEvent) => this.onSidebarResize(ev);
-    this.mouseUpHandler = () => this.stopSidebarResize();
-    document.addEventListener('mousemove', this.mouseMoveHandler);
-    document.addEventListener('mouseup', this.mouseUpHandler);
-    event.preventDefault();
-  }
-
-  private onSidebarResize(event: MouseEvent): void {
-    if (!this.isSidebarResizing) {
-      return;
-    }
-    const deltaX = event.clientX - this.sidebarResizeStartX;
-    const nextWidth = this.sidebarResizeStartWidth + deltaX;
-    this.sidebarWidth = Math.max(this.minSidebarWidth, Math.min(this.maxSidebarWidth, nextWidth));
-  }
-
-  private stopSidebarResize(): void {
-    this.isSidebarResizing = false;
-    document.body.classList.remove('sidebar-resizing');
-    this.detachSidebarResizeListeners();
-  }
-
-  private detachSidebarResizeListeners(): void {
-    if (this.mouseMoveHandler) {
-      document.removeEventListener('mousemove', this.mouseMoveHandler);
-      this.mouseMoveHandler = null;
-    }
-    if (this.mouseUpHandler) {
-      document.removeEventListener('mouseup', this.mouseUpHandler);
-      this.mouseUpHandler = null;
-    }
   }
 
   SetLoginTokenToLocalStorage(): void {

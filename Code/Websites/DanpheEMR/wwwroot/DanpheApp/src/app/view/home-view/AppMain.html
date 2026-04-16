@@ -155,36 +155,6 @@
     background: #ffffff !important;
     box-shadow: none !important;
     border-right: 1px solid #e5e7eb !important;
-    transition: width 120ms ease;
-  }
-
-  .page-sidebar-wrapper {
-    position: relative;
-    transition: width 120ms ease;
-  }
-
-  .page-content-wrapper {
-    transition: margin-left 120ms ease;
-  }
-
-  .sidebar-resizer {
-    position: absolute;
-    top: 0;
-    right: -3px;
-    width: 8px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 12;
-    background: transparent;
-  }
-
-  .sidebar-resizer:hover {
-    background: rgba(59, 130, 246, 0.18);
-  }
-
-  body.sidebar-resizing {
-    user-select: none;
-    cursor: col-resize !important;
   }
 
   .page-sidebar-wrapper .page-sidebar .cstm-sidebar.page-sidebar-menu {
@@ -362,9 +332,6 @@
 
             <h3 style="color: #fff; font-weight: 700; font-family: 'Oswald';">PULSE HOSPITAL</h3>
           </a>
-          <div class="menu-toggler sidebar-toggler">
-            <span></span>
-          </div>
         </div>
         <div class="patient-info-header" *ngIf="PatService.globalPatient.PatientCode != null">
           <b class="header-sm">
@@ -514,11 +481,11 @@
     <div [ngClass]="navService.showTopNav ? 'page-container':'' ">
 
       <!-- BEGIN SIDEBAR -->
-      <div *ngIf="navService.showSideNav" class="page-sidebar-wrapper" [style.width.px]="sidebarWidth">
+      <div *ngIf="navService.showSideNav" class="page-sidebar-wrapper">
         <!-- BEGIN SIDEBAR -->
         <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
         <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
-        <div class="page-sidebar navbar-collapse collapse" [style.width.px]="sidebarWidth">
+        <div class="page-sidebar navbar-collapse collapse">
           <!-- BEGIN SIDEBAR MENU -->
           <!-- DOC: Apply "page-sidebar-menu-light" class right after "page-sidebar-menu" to enable light sidebar menu style(without borders) -->
           <!-- DOC: Apply "page-sidebar-menu-hover-submenu" class right after "page-sidebar-menu" to enable hoverable(hover vs accordion) sub menu mode -->
@@ -572,12 +539,11 @@
           <!-- END SIDEBAR MENU -->
           <!-- END SIDEBAR MENU -->
         </div>
-        <div class="sidebar-resizer" (mousedown)="startSidebarResize($event)"></div>
         <!-- END SIDEBAR -->
       </div>
       <!-- END SIDEBAR -->
       <!-- BEGIN CONTENT -->
-      <div class="page-content-wrapper" [style.margin-left.px]="navService.showSideNav ? sidebarWidth : 0">
+      <div class="page-content-wrapper">
 
         <!-- BEGIN CONTENT BODY -->
         <!-- <danphe-loading [loading]="loading"></danphe-loading> -->
