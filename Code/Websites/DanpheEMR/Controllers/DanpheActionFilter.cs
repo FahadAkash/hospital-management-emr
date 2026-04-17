@@ -84,14 +84,25 @@ namespace DanpheEMR.Controllers
                         //Check is currentPermission has value or not
                         if (currentPermission == null || currentPermission.PermissionName == null)
                         {
-                            //Redirect to PageNot found page
-                            context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Account" }, { "action", "PageNotFound" } });
+                            // Session permission cache can be stale after role changes.
+                            // Fallback to live RBAC check before denying.
+                            bool hasPermission = RBAC.UserHasPermission(currentUser.UserId, PermissionName);
+                            if (!hasPermission)
+                            {
+                                //Redirect to PageNot found page
+                                context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Account" }, { "action", "PageNotFound" } });
+                            }
                         }
                     }
                     else
                     {
-                        //Redirect to page not found page
-                        context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Account" }, { "action", "PageNotFound" } });
+                        // Session permission list is empty; fallback to live RBAC check.
+                        bool hasPermission = RBAC.UserHasPermission(currentUser.UserId, PermissionName);
+                        if (!hasPermission)
+                        {
+                            //Redirect to page not found page
+                            context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Account" }, { "action", "PageNotFound" } });
+                        }
                     }
                 }
             }

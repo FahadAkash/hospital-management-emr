@@ -20,12 +20,12 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   public loading: boolean = false;
 
   // Role-based visibility
-  public showRevenueAnalytics: boolean = true;
-  public showClinicalAnalytics: boolean = true;
+  public showRevenueAnalytics: boolean = false;
+  public showClinicalAnalytics: boolean = false;
 
   // (Optional) finer-grained visibility; currently mapped into the two flags above
-  public showTopDoctors: boolean = true;
-  public showDepartmentRevenueChart: boolean = true;
+  public showTopDoctors: boolean = false;
+  public showDepartmentRevenueChart: boolean = false;
 
   // KPI values
   public todayPatientCount: number = 0;
@@ -61,6 +61,16 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.initializeDashboardVisibilityAndData();
+  }
+
+  private initializeDashboardVisibilityAndData(retriesLeft: number = 10) {
+    const user = this.securityService.GetLoggedInUser();
+    if (!user && retriesLeft > 0) {
+      // Logged-in user/session may be populated a moment later during first route load.
+      setTimeout(() => this.initializeDashboardVisibilityAndData(retriesLeft - 1), 250);
+      return;
+    }
     this.resolveDashboardVisibility();
     this.refreshAll();
   }
@@ -68,12 +78,12 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   private resolveDashboardVisibility() {
     const user = this.securityService.GetLoggedInUser();
     
-    // If we can't get the user for some reason, default to showing everything
+    // If we can't resolve logged-in user, keep widgets hidden.
     if (!user) {
-      this.showRevenueAnalytics = true;
-      this.showClinicalAnalytics = true;
-      this.showTopDoctors = true;
-      this.showDepartmentRevenueChart = true;
+      this.showRevenueAnalytics = false;
+      this.showClinicalAnalytics = false;
+      this.showTopDoctors = false;
+      this.showDepartmentRevenueChart = false;
       return;
     }
 
@@ -85,8 +95,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Primary: use RBAC permissions (exact permissions mapped to roles).
-    // Fallback: use RBAC navigation routes (also tied to permissions/role via RouteConfig).
+    // Permission-driven only.
     const canSeePermission = (permissionName: string): boolean => {
       try {
         return !!permissionName && this.securityService.HasPermission(permissionName);
@@ -95,29 +104,13 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       }
     };
 
-    // Fallback helper (route visibility is also permission-driven in this app)
-    // Note: `UserNavigations[].UrlFullPath` is stored without leading slash in this app.
-    const canSee = (urlFullPath: string): boolean => {
-      try {
-        const filtered = (urlFullPath || '').startsWith('/') ? urlFullPath.substring(1) : (urlFullPath || '');
-        if (!filtered) { return false; }
-        const navs: any[] = (this.securityService.UserNavigations as any) || [];
-        return navs.some(n => (n && n.UrlFullPath) === filtered);
-      } catch (e) {
-        return false;
-      }
-    };
-
     // Revenue-related widgets are based on Billing Reports access.
     const canSeeDeptRevenue =
       canSeePermission('Reports/BillingMain/DepartmentSummary') ||
-      canSeePermission('Reports/BillingMain/DepartmentRevenue') ||
-      canSee('/Reports/BillingMain/DepartmentSummary') ||
-      canSee('/Reports/BillingMain/DepartmentRevenue');
+      canSeePermission('Reports/BillingMain/DepartmentRevenue');
 
     const canSeeDoctorRevenue =
-      canSeePermission('Reports/BillingMain/DoctorRevenue') ||
-      canSee('/Reports/BillingMain/DoctorRevenue');
+      canSeePermission('Reports/BillingMain/DoctorRevenue');
 
     this.showDepartmentRevenueChart = canSeeDeptRevenue;
     this.showTopDoctors = canSeeDoctorRevenue;
@@ -126,44 +119,19 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     // Clinical widgets are based on clinical module access.
     // (Doctors should keep seeing clinical analytics; finance-only users can still see clinical if they have access.)
     const canSeeClinical =
-      canSee('/Doctors') ||
-      canSee('/Patient') ||
-      canSee('/Appointment') ||
-      canSee('/ADTMain') ||
-      canSee('/Emergency') ||
-      canSee('/Reports/AppointmentMain') ||
-      canSee('/Reports/AdmissionMain') ||
-      canSee('/Reports/LabMain');
+      canSeePermission('Doctors') ||
+      canSeePermission('Patient') ||
+      canSeePermission('Appointment') ||
+      canSeePermission('ADTMain') ||
+      canSeePermission('Emergency') ||
+      canSeePermission('Reports/AppointmentMain') ||
+      canSeePermission('Reports/AdmissionMain') ||
+      canSeePermission('Reports/LabMain');
     this.showClinicalAnalytics = canSeeClinical;
 
-    // Fallback: if navs aren't loaded yet (or custom routes), fall back to position keywords.
-    // This preserves current behavior and still gives you "based on position" behavior.
-    if (!this.showClinicalAnalytics && !this.showRevenueAnalytics) {
-      if (user.Employee) {
-        const dept = (user.Employee.DepartmentName || '').toLowerCase();
-        const role = (user.Employee.EmployeeRoleName || '').toLowerCase();
-
-        if (dept.includes('doctor') || dept.includes('nurse') || dept.includes('clinical') || role.includes('doctor') || role.includes('nurse')) {
-          this.showClinicalAnalytics = true;
-        }
-        if (dept.includes('account') || dept.includes('billing') || dept.includes('finance') || role.includes('account') || role.includes('billing')) {
-          this.showRevenueAnalytics = true;
-          this.showDepartmentRevenueChart = true;
-          this.showTopDoctors = true;
-        }
-        if (dept.includes('admin') || role.includes('admin')) {
-          this.showClinicalAnalytics = true;
-          this.showRevenueAnalytics = true;
-          this.showDepartmentRevenueChart = true;
-          this.showTopDoctors = true;
-        }
-      }
-    }
-
-    // Final fallback: don't blank the dashboard entirely.
-    if (!this.showClinicalAnalytics && !this.showRevenueAnalytics) {
-      this.showClinicalAnalytics = true;
-    }
+    // IMPORTANT:
+    // Do not use department/position keyword fallbacks here.
+    // Dashboard visibility must stay permission/navigation-driven only.
   }
 
   ngOnDestroy() {
@@ -171,6 +139,8 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   }
 
   public refreshAll() {
+    // Re-evaluate permissions before every refresh/navigation return.
+    this.resolveDashboardVisibility();
     this.loading = true;
     this.lastRefreshed = moment().format('HH:mm:ss');
 

@@ -78,6 +78,30 @@ namespace DanpheEMR.Core.Caching
             return DanpheCache.globalMemcache.Get(key);
         }
 
+        public static void Remove(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+            DanpheCache.globalMemcache.Remove(key);
+        }
+
+        public static void RemoveByPrefix(string prefix)
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+            {
+                return;
+            }
+            var keys = DanpheCache.globalMemcache.Select(kvp => kvp.Key)
+                .Where(k => k != null && k.StartsWith(prefix, StringComparison.Ordinal))
+                .ToList();
+            foreach (var k in keys)
+            {
+                DanpheCache.globalMemcache.Remove(k);
+            }
+        }
+
 
 
         public static object GetMasterData(MasterDataEnum masterName)

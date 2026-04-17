@@ -13,6 +13,7 @@ using DanpheEMR.ServerModel.Helpers;//for appointmenthelpers
 using DanpheEMR.Core.Configuration;
 using DanpheEMR.Security;
 using DanpheEMR.Core;
+using DanpheEMR.Core.Caching;
 
 
 namespace DanpheEMR.Controllers
@@ -292,8 +293,9 @@ namespace DanpheEMR.Controllers
             {
                 _rbacDbContext.RolePermissionMaps.Add(roleP);
             });
-
-            return _rbacDbContext.SaveChanges();
+            int rows = _rbacDbContext.SaveChanges();
+            RefreshRbacPermissionCacheForRole(roleId);
+            return rows;
         }
 
 
@@ -382,6 +384,7 @@ namespace DanpheEMR.Controllers
         private int UpdateRolePermissions(string ipDataStr)
         {
             List<RolePermissionMap> rolePermissions = DanpheJSONConvert.DeserializeObject<List<RolePermissionMap>>(ipDataStr);
+            int roleId = rolePermissions != null && rolePermissions.Count > 0 ? rolePermissions.First().RoleId : 0;
             rolePermissions.ForEach(roleP =>
             {
                 _rbacDbContext.RolePermissionMaps.Attach(roleP);
@@ -389,8 +392,28 @@ namespace DanpheEMR.Controllers
                 _rbacDbContext.Entry(roleP).Property(x => x.CreatedOn).IsModified = false;
                 _rbacDbContext.Entry(roleP).Property(x => x.CreatedBy).IsModified = false;
             });
-             return _rbacDbContext.SaveChanges();
+            int rows = _rbacDbContext.SaveChanges();
+            if (roleId > 0)
+            {
+                RefreshRbacPermissionCacheForRole(roleId);
+            }
+            return rows;
             
+        }
+
+        private void RefreshRbacPermissionCacheForRole(int roleId)
+        {
+            // Clear role-permission and user-permission caches so menu/permissions update immediately.
+            DanpheCache.Remove("RBAC-RolePermissionMaps-All");
+            var affectedUserIds = _rbacDbContext.UserRoleMaps
+                .Where(ur => ur.RoleId == roleId && ur.IsActive == true)
+                .Select(ur => ur.UserId)
+                .Distinct()
+                .ToList();
+            foreach (var userId in affectedUserIds)
+            {
+                DanpheCache.Remove("RBAC-UserPermissions-UserId" + userId);
+            }
         }
 
         [HttpPut]

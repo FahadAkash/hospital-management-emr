@@ -77,19 +77,19 @@
             </option>
         </select>
     </div>
-    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-show-all-employee-btn','action':'hidden'}">
+    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-show-all-employee-btn','actionOnInvalid':'hidden'}">
         <label class="mt-checkbox mt-checkbox-outline" style="font-weight: bold;color: green;">
             <input (change)="LoadEmployeeList('all')" name="name" style="width:15px;height:15px" type="radio"
                 class="ng-untouched ng-pristine ng-valid">
             <span></span>ALL Employee
         </label>
     </div>
-    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-biometric-sync-btn','action':'hidden'}">
+    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-biometric-sync-btn','actionOnInvalid':'hidden'}">
         <button class="btn btn-primary" (click)="GetFileToImportData()" title="Click to select the file...">
             <i class="fa fa-refresh"></i> Sync Biometric Attendance
         </button>
     </div>
-    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-edit-btn','action':'hidden'}">
+    <div class="col-md-2" [rbac-permission]="{'name':'payroll-attendance-edit-btn','actionOnInvalid':'hidden'}">
         <button class="btn btn-primary" (click)="EditAttendance()">
             <i class="fa fa-edit"></i> Edit Attendance
         </button>

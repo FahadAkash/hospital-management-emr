@@ -7,6 +7,7 @@ import GridColumnSettings from '../../../shared/danphe-grid/grid-column-settings
 import { GridEmitModel } from '../../../shared/danphe-grid/grid-emit.model';
 import { Employee } from "../../../employee/shared/employee.model";
 import { EmployeeLeaveModel } from "../../Shared/Payroll-Employee-Leave.model";
+import { SecurityService } from "../../../security/shared/security.service";
 
 @Component({
   selector:'leave-request',
@@ -28,9 +29,11 @@ export class LeaveRequestComponent {
 
   constructor(public payrollBLService: PayrollBLService, public _coreService: CoreService,
     public messageboxService: MessageboxService,
-    public changeDetectorRef: ChangeDetectorRef) {
+    public changeDetectorRef: ChangeDetectorRef,
+    public securityService: SecurityService) {
     this.currentYear = moment().startOf("year").format('YYYY');
     //this.getEmployeeLeaveDetails(this.currentYear);
+    this.employee.EmployeeId = this.securityService.GetLoggedInUser().EmployeeId;
     this.LoadEmployeeList();
     this.LeaveRequestListComlumns = GridColumnSettings.EmployeeListwithStatus;
     this.selLeaveRequests.LeaveStatus = "all";

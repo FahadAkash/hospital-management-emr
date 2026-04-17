@@ -29,8 +29,22 @@ namespace DanpheEMR.Controllers
             DanpheHTTPResponse<object> responseData = new DanpheHTTPResponse<object>();
             PayrollDbContext payrollDbContext = new PayrollDbContext(connString);
             MasterDbContext masterDbContext = new MasterDbContext(connString);
+            RbacUser currentUser = GetCurrentUserFromSessionOrJwt();
+            bool isPayrollPrivilegedUser = currentUser != null
+                                           && (string.Equals(currentUser.UserName, "admin", StringComparison.OrdinalIgnoreCase)
+                                               || string.Equals(currentUser.UserName, "admin2", StringComparison.OrdinalIgnoreCase));
+            int currentEmployeeId = currentUser != null ? currentUser.EmployeeId : 0;
             try
             {
+                // Self-service mode: non-privileged users can only view their own payroll data.
+                if (!isPayrollPrivilegedUser && currentEmployeeId > 0)
+                {
+                    CurrEmpId = currentEmployeeId;
+                    if (empId > 0 && empId != currentEmployeeId)
+                    {
+                        empId = currentEmployeeId;
+                    }
+                }
                 if (reqType == "get-emp-list")
                 {
                     if (CurrEmpId != 0)
@@ -183,6 +197,7 @@ namespace DanpheEMR.Controllers
                                      on req.LeaveStatus equals stat
                                      join leaveCat in payrollDbContext.leaveCategories on leave.LeaveCategoryId equals leaveCat.LeaveCategoryId
                                      where leave.Year == currentYear
+                                     && (isPayrollPrivilegedUser || req.EmployeeId == currentEmployeeId)
                                      select new
                                      {
                                          EmployeeId = req.EmployeeId,
@@ -204,6 +219,7 @@ namespace DanpheEMR.Controllers
                 else if (reqType == "get-employeeList")
                 {
                     var EmpList = (from emp in payrollDbContext.Employee
+                                   where (isPayrollPrivilegedUser || emp.EmployeeId == currentEmployeeId)
 
                                    select new
                                    {
@@ -244,6 +260,7 @@ namespace DanpheEMR.Controllers
                                   join levRul in payrollDbContext.leaveRuleModels on levemp.LeaveRuleId equals levRul.LeaveRuleId
                                   join levCat in payrollDbContext.leaveCategories on levRul.LeaveCategoryId equals levCat.LeaveCategoryId
                                   where levemp.Date.Year == Year && levRul.IsActive == true
+                                  && (isPayrollPrivilegedUser || levemp.EmployeeId == currentEmployeeId)
                                   group new { emp, levemp, levRul, levCat } by new
                                   {
                                       EmployeeId = levemp.EmployeeId,
@@ -296,6 +313,10 @@ namespace DanpheEMR.Controllers
 
                 else if (reqType == "emp-by-id")
                 {
+                    if (!isPayrollPrivilegedUser && currentEmployeeId > 0)
+                    {
+                        empId = currentEmployeeId;
+                    }
 
                     var empDetails = (from emp in payrollDbContext.Employee.AsEnumerable()
                                       where emp.EmployeeId == empId
@@ -316,6 +337,10 @@ namespace DanpheEMR.Controllers
                 }
                 else if (reqType== "leave-details-by-empid")
                 {
+                    if (!isPayrollPrivilegedUser && currentEmployeeId > 0)
+                    {
+                        empId = currentEmployeeId;
+                    }
                     var empLeaveModel = (from emplev in payrollDbContext.employeeLeaveModels
                                          join lr in payrollDbContext.leaveRuleModels on emplev.LeaveRuleId equals lr.LeaveRuleId
                                          join lc in payrollDbContext.leaveCategories on lr.LeaveCategoryId equals lc.LeaveCategoryId
@@ -372,7 +397,11 @@ namespace DanpheEMR.Controllers
         {
             DanpheHTTPResponse<object> responseData = new DanpheHTTPResponse<object>();
             PayrollDbContext payrollDbContext = new PayrollDbContext(connString);
-            RbacUser currentUser = HttpContext.Session.Get<RbacUser>("currentuser");
+            RbacUser currentUser = GetCurrentUserFromSessionOrJwt();
+            bool isPayrollPrivilegedUser = currentUser != null
+                                           && (string.Equals(currentUser.UserName, "admin", StringComparison.OrdinalIgnoreCase)
+                                               || string.Equals(currentUser.UserName, "admin2", StringComparison.OrdinalIgnoreCase));
+            int currentEmployeeId = currentUser != null ? currentUser.EmployeeId : 0;
             string reqType = this.ReadQueryStringData("reqType");
             string str = this.ReadPostData();
 
@@ -530,6 +559,10 @@ namespace DanpheEMR.Controllers
                     {
                         foreach (var request in leaveList)
                         {
+                            if (!isPayrollPrivilegedUser && currentEmployeeId > 0)
+                            {
+                                request.EmployeeId = currentEmployeeId;
+                            }
                             request.CreatedOn = System.DateTime.Now;
                             request.LeaveStatus = "pending";
                             request.CreatedBy = currentUser.EmployeeId;
@@ -592,7 +625,11 @@ namespace DanpheEMR.Controllers
         {
             DanpheHTTPResponse<object> responseData = new DanpheHTTPResponse<object>();
             PayrollDbContext payrollDbContext = new PayrollDbContext(connString);
-            RbacUser currentUser = HttpContext.Session.Get<RbacUser>("currentuser");
+            RbacUser currentUser = GetCurrentUserFromSessionOrJwt();
+            bool isPayrollPrivilegedUser = currentUser != null
+                                           && (string.Equals(currentUser.UserName, "admin", StringComparison.OrdinalIgnoreCase)
+                                               || string.Equals(currentUser.UserName, "admin2", StringComparison.OrdinalIgnoreCase));
+            int currentEmployeeId = currentUser != null ? currentUser.EmployeeId : 0;
             string reqType = this.ReadQueryStringData("reqType");
             string str = this.ReadPostData();
             try
@@ -600,6 +637,10 @@ namespace DanpheEMR.Controllers
                 if (reqType == "put-changed-attendance")
                 {
                     DailyMuster dailyMuster = DanpheJSONConvert.DeserializeObject<DailyMuster>(str);
+                    if (!isPayrollPrivilegedUser && currentEmployeeId > 0)
+                    {
+                        dailyMuster.EmployeeId = currentEmployeeId;
+                    }
                     DailyMuster dailyMusterDB = payrollDbContext.dailyMusters
                      .Where(r => r.EmployeeId == dailyMuster.EmployeeId &&
                      r.Day == dailyMuster.Day && r.Month == dailyMuster.Month
