@@ -1,382 +1,678 @@
-@using System;
-@using System.Collections.Generic;
-@using System.Linq;
-@using System.Text;
-@using DanpheEMR.Security;
-
-@{
-    List<DanpheRoute> validRoutes = (List<DanpheRoute>)ViewData["validroutes"];
-    RbacUser currUser = (RbacUser)ViewData["currentuser"];
-    validRoutes = validRoutes.Where(r => r.DefaultShow != false && r.IsActive == true).ToList();
-}
-
 <style>
-    .nav-schedule {
-        background-image: url('/themes/theme-default/images/nav/schedule.PNG');
-    }
+  .nav-schedule {
+    background-image: url('/themes/theme-default/images/nav/schedule.PNG');
+  }
 
-    
+  .help-about {
+    color: #fdefef !important;
+    font-size: 19px !important;
+  }
 
-    .help-about {
-        color: #fdefef !important;
-        font-size: 19px !important;
-    }
-
-    .page-sidebar .page-sidebar-menu ul.sub-menu {
-        margin: 0px;
-    }
+  .page-sidebar .page-sidebar-menu ul.sub-menu {
+    margin: 0px;
+  }
 
 
 
-    span.ad-sign:after {
-        position: absolute;
-        display: inline-block;
-        content: '\2013';
-        right: 5px;
-        top: 11px;
-        text-align: center;
-        background: #536c7d;
-        z-index: 22;
-        width: 24px;
-        height: 24px;
-        line-height: 20px;
-        font-weight: bold;
-        color: #fff;
-        font-size: 20px;
-        transition: transform .25s linear;
-        -webkit-transition: -webkit-transform .25s linear;
-    }
+  span.ad-sign:after {
+    position: absolute;
+    display: inline-block;
+    content: '\F107';
+    right: 5px;
+    top: 11px;
+    text-align: center;
+    background: transparent;
+    z-index: 22;
+    width: 24px;
+    height: 24px;
+    line-height: 20px;
+    font-weight: bold;
+    color: #ddd;
+    font-size: 12px;
+    transition: transform .25s linear;
+    -webkit-transition: -webkit-transform .25s linear;
+    font-family: 'fontAwesome';
+  }
 
-    span.ad-sign.collapsed:after {
-        line-height: 24px !important;
-        content: '+';
-        -webkit-transform: rotate(90deg);
-        transform: rotate(90deg);
-    }
+  span.ad-sign.collapsed:after {
+    line-height: 24px !important;
+    content: '\F107';
+    -webkit-transform: rotate(00deg);
+    transform: rotate(00deg);
+  }
 
-    span.ad-sign:after {
-        -webkit-transform: rotate(180deg);
-        transform: rotate(180deg);
-    }
+  span.ad-sign:after {
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
+  }
 
-    .page-sidebar-menu-closed span.ad-sign {
+  /* .page-sidebar-menu-closed .page-sidebar-menu span.ad-sign {
         display: none;
-    }
+    } */
 
-    ul.page-sidebar-menu > li {
-        position: relative;
-    }
+  ul.page-sidebar-menu-closed span.ad-sign {
+    display: none;
+  }
 
-    .page-sidebar .page-sidebar-menu > li > a {
-        border-top: 2px solid #3d4957 !important;
-    }
+  ul.page-sidebar-menu>li {
+    position: relative;
+  }
 
-    .page-sidebar .page-sidebar-menu > li > a {
-        background: #fff;
-        color: #555;
-    }
+  .page-sidebar {
+    box-shadow: 0px 0px 20px #eee;
+  }
 
-    .page-sidebar .page-sidebar-menu > li > a, .page-sidebar-closed.page-sidebar-fixed .page-sidebar:hover .page-sidebar-menu > li > a {
-        padding: 7px 15px 7px 8px;
-    }
-    .form-control {
-        background-color: #fbfbfb;
-        border: 1px solid rgba(0,0,0,.2);
-    }
+  body>div.tooltip.fade.top.in {
+    display: none !important;
+  }
 
-    .sidebar-search-wrapper {
-        padding: 15px 12px;
-        background-color: transparent;
-        transition: all 0.3s;
-    }
+  span.title {
+    font-weight: normal;
+  }
 
-    .page-sidebar-menu-closed .sidebar-search-wrapper {
-        display: none !important;
-    }
+  .sidebar-search-wrapper {
+    padding: 15px 12px;
+    background-color: transparent;
+    transition: all 0.3s;
+  }
 
-    .sidebar-search-wrapper .input-group {
-        width: 100%;
-        position: relative;
-    }
+  .page-sidebar-menu-closed .sidebar-search-wrapper {
+    display: none !important;
+  }
 
-    .sidebar-search-wrapper .form-control {
-        height: 34px;
-        border-radius: 20px !important;
-        background: #ffffff;
-        border: 1px solid #e1e1e1;
-        padding-left: 35px;
-        font-size: 13px;
-        color: #555;
-        width: 100%;
-        box-shadow: none;
-        transition: width 0.3s;
-    }
+  .sidebar-search-wrapper .input-group {
+    width: 100%;
+    position: relative;
+  }
 
-    .sidebar-search-wrapper .form-control:focus {
-        border-color: #337ab7;
-        box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
-    }
+  .sidebar-search-wrapper .form-control {
+    height: 34px;
+    border-radius: 20px !important;
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    padding-left: 35px;
+    font-size: 13px;
+    color: #555;
+    width: 100%;
+    box-shadow: none;
+    transition: width 0.3s;
+  }
 
-    .sidebar-search-wrapper:before {
-        content: '\f002';
-        font-family: 'FontAwesome';
-        position: absolute;
-        left: 25px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #999;
-        z-index: 10;
-    }
+  .sidebar-search-wrapper .form-control:focus {
+    border-color: #337ab7;
+    box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
+  }
+
+  .sidebar-search-wrapper::before {
+    content: '\f002';
+    font-family: 'FontAwesome';
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    z-index: 10;
+  }
+
+  /* ===== Modern flat sidebar overrides (scoped) ===== */
+  .page-header.navbar {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .page-header.navbar .page-logo {
+    height: 56px !important;
+    min-height: 56px !important;
+    display: flex;
+    align-items: center;
+    width: 320px;
+  }
+
+  .page-header.navbar .page-logo a {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    text-decoration: none !important;
+  }
+
+  .page-header.navbar .page-logo h3 {
+    margin: 0 !important;
+    padding-left: 12px;
+    line-height: 56px !important;
+    font-size: 34px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    letter-spacing: 0.4px;
+  }
+
+  .page-header.navbar .page-logo .menu-toggler.sidebar-toggler {
+    margin-left: auto;
+    margin-right: 10px;
+  }
+
+  .page-sidebar-wrapper {
+    width: 220px !important;
+    min-width: 220px !important;
+  }
+  .page-sidebar-wrapper .page-sidebar {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border-right: 1px solid #e5e7eb !important;
+    width: 220px !important;
+    min-width: 220px !important;
+  }
+  .page-content-wrapper .page-content {
+    margin-left: 220px !important;
+  }
+  
+  /* Force internal elements to stretch to the new sidebar width */
+  .page-sidebar-wrapper .page-sidebar .slimScrollDiv,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .cstm-sidebar.page-sidebar-menu {
+    background: transparent !important;
+    padding: 10px 12px 14px 12px !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper {
+    padding: 12px 10px 10px 10px !important;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 2;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper::before {
+    left: 22px;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control {
+    border-radius: 12px !important;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding-left: 36px;
+    font-size: 14px;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control:focus {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .page-sidebar-wrapper .page-sidebar .menu-section-title {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.7;
+    margin: 14px 8px 6px 8px;
+    color: inherit;
+  }
+  
+  ul.page-sidebar-menu > li > a {
+    border-top: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+    margin: 2px 0 !important;
+    background: transparent !important;
+    color: #111827 !important;
+    border-left: 2px solid transparent !important;
+    transition: background-color 120ms ease, color 120ms ease;
+    box-shadow: none !important;
+    width: 100% !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a img {
+    height: 18px !important;
+    width: 18px !important;
+    margin: 0 !important;
+    opacity: 0.9;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .nav-fa-icon {
+    width: 20px;
+    min-width: 20px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active .nav-fa-icon,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a .nav-fa-icon {
+    color: #1d4ed8;
+  }
+
+  /* Force wrap and clip instead of ellipsis */
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .title {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.05px !important;
+    color: inherit !important;
+    flex-grow: 1 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    line-height: 1.3 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a {
+    background: #e8f1ff !important;
+    border-left-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu {
+    margin: 2px 0 8px 22px !important;
+    padding: 4px 0 4px 0 !important;
+    border-left: 2px solid rgba(148, 163, 184, 0.25) !important;
+    background: transparent !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li {
+    border: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a {
+    border-radius: 6px !important;
+    padding: 7px 10px !important;
+    margin: 2px 0 2px 8px !important;
+    color: #4b5563 !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    display: flex;
+    align-items: center;
+    border: none !important;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a.left-nav-active {
+    background: rgba(59, 130, 246, 0.08) !important;
+    color: #1d4ed8 !important;
+    font-weight: 600;
+  }
+
+  /* cleaner expand/collapse chevron */
+  span.ad-sign:after {
+    color: #9ca3af !important;
+    position: relative !important;
+    top: auto;
+    right: auto;
+    font-size: 12px;
+  }
+
+  /* Make sidebar scroll look modern (where supported) */
+  .page-sidebar-wrapper .page-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+  }
+  .page-sidebar-wrapper .page-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
 </style>
+  .nav-schedule {
+    background-image: url('/themes/theme-default/images/nav/schedule.PNG');
+  }
 
-<body class="page-header-fixed page-sidebar-closed-hide-logo page-content-white">
-    <div class="page-wrapper">
-        <!-- BEGIN HEADER -->
-        <div *ngIf="navService.showTopNav" class="page-header navbar navbar-fixed-top">
-            <!-- BEGIN HEADER INNER -->
-            <div class="page-header-inner ">
-                <!-- BEGIN LOGO -->
-                <div class="page-logo">
-                    <a href="#">
+  .help-about {
+    color: #fdefef !important;
+    font-size: 19px !important;
+  }
 
-                        <h3 style="color: #fff; font-weight: bold; margin-top: 10px; font-family: 'Oswald';">PULSE HOSPITAL</h3>
-                    </a>
-                    <div class="menu-toggler sidebar-toggler">
-                        <span></span>
-                    </div>
-                </div>
-                <div style="display: inline-block;color:#f3e2e2;padding-left: 66px;font-size: 16px;">
-                    <b>
-                        {{PatService.globalPatient.ShortName}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <span *ngIf="PatService.globalPatient.PatientCode != null">
-                            Hospital No : {{PatService.globalPatient.PatientCode}}
-                        </span>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </b>
-
-                    <b>
-                        <span *ngIf="PatService.globalPatient.DateOfBirth != null">
-                            Age/Sex :  {{PatService.globalPatient.DateOfBirth | DanpheDateTime:'age' }}
-                        </span>
-                        <span *ngIf="PatService.globalPatient.DateOfBirth != null"> / {{PatService.globalPatient.Gender}} </span>
-                    </b>
-                    @*<span *ngIf="PatService.globalPatient.EMPI != null">{{pageParameters.EmpiLabel}}: <b>{{PatService.globalPatient.EMPI }}</b></span>*@
-
-                    @*<span *ngIf="PatService.globalPatient.DateOfBirth != null">
-                            DOB:-<b>{{PatService.globalPatient.DateOfBirth | DanpheDateTime:'format':'YYYY-MM-DD' }}</b>
-                        </span>*@
-                </div>
-                <!-- END LOGO -->
-                <!-- BEGIN RESPONSIVE MENU TOGGLER -->
-                <a href="javascript:;" class="menu-toggler responsive-toggler" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span></span>
-                </a>
-                <!-- END RESPONSIVE MENU TOGGLER -->
-                <!-- BEGIN TOP NAVIGATION MENU -->
-                <div class="top-menu">
-
-                    <ul class="nav navbar-nav pull-right">
-                        <li title="My notifications">
-                            <notification-icon>
-
-                            </notification-icon>
-                        </li>
-
-                        <!-- BEGIN NOTIFICATION DROPDOWN -->
-                        <!-- DOC: Apply "dropdown-dark" class after "dropdown-extended" to change the dropdown styte -->
-                        <!-- DOC: Apply "dropdown-hoverable" class after below "dropdown" and remove data-toggle="dropdown" data-hover="dropdown" data-close-others="true" attributes to enable hover dropdown mode -->
-                        <!-- DOC: Remove "dropdown-hoverable" and add data-toggle="dropdown" data-hover="dropdown" data-close-others="true" attributes to the below A element with dropdown-toggle class -->
-                        <!-- END NOTIFICATION DROPDOWN -->
-                        <!-- BEGIN USER LOGIN DROPDOWN -->
-                        <!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
-                        <li class="dropdown dropdown-user">
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <img alt="" class="img-circle" *ngIf="currentUsr.Profile.ImageLocation!=''" src="{{currentUsr.Profile.ImageLocation}}" />
-                                <span class="username username-hide-on-mobile" style="color: white; font-weight: bold;"> @currUser.UserName </span>
-                                <i class="fa fa-angle-down"></i>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-default">
-                                <li>
-                                    <a routerLink="Employee/ProfileMain">
-                                        <i class="icon-user"></i> My Profile
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a href="@Url.Action("Logout","Account")" type="submit">
-                                        <i class="icon-key"></i> Log Out
-                                    </a>
-
-                                </li>
-                            </ul>
-                        </li>
-                        <!-- END USER LOGIN DROPDOWN -->
-
-                        <li class="dropdown tooltip">
-                            @*sud:24Dec-to display application's current version information on tooltip*@
-                            <span *ngIf="coreService.appVersionNum" class="tooltiptext ttptextdown" style="width: 150px;margin-left: -75px;text-align: left;">
-                                <i class="fa fa-info"></i>
-                                {{coreService.appVersionNum}}
-                            </span>
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <i class="fa fa-question-circle help-about"></i>
-                                <i class="fa fa-angle-down"></i>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-default">
-                                <li>
-                                    <a (click)="DownloadUserManual()">
-                                        <i class="fa fa-download"></i>Download user manual
-                                    </a>
-                                </li>
-                              
-
-                            </ul>
-                        </li>
-
-                    </ul>
-                </div>
-                <!-- END TOP NAVIGATION MENU -->
-            </div>
-            <!-- END HEADER INNER -->
-        </div>
-        <!-- END HEADER -->
-        <!-- BEGIN HEADER & CONTENT DIVIDER -->
-        <div class="clearfix"> </div>
-        <!-- END HEADER & CONTENT DIVIDER -->
-        <!-- BEGIN CONTAINER -->
-        <div [ngClass]="navService.showTopNav ? 'page-container':'' ">
-
-            <!-- BEGIN SIDEBAR -->
-            <div *ngIf="navService.showSideNav" class="page-sidebar-wrapper">
-                <!-- BEGIN SIDEBAR -->
-                <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
-                <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
-                <div class="page-sidebar navbar-collapse collapse">
-                    <!-- BEGIN SIDEBAR MENU -->
-                    <!-- DOC: Apply "page-sidebar-menu-light" class right after "page-sidebar-menu" to enable light sidebar menu style(without borders) -->
-                    <!-- DOC: Apply "page-sidebar-menu-hover-submenu" class right after "page-sidebar-menu" to enable hoverable(hover vs accordion) sub menu mode -->
-                    <!-- DOC: Apply "page-sidebar-menu-closed" class right after "page-sidebar-menu" to collapse("page-sidebar-closed" class must be applied to the body element) the sidebar sub menu mode -->
-                    <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
-                    <!-- DOC: Set data-keep-expand="true" to keep the submenues expanded -->
-                    <!-- DOC: Set data-auto-speed="200" to adjust the sub menu slide up/down speed -->
-                    <ul class="menu-content out page-sidebar-menu" style="padding-top: 0px">
-                        <li class="sidebar-search-wrapper">
-                            <div class="input-group">
-                                <input type="text" id="sidebar-search-razor" class="form-control" placeholder="Search Menu..." onkeyup="filterSidebarMenu()">
-                            </div>
-                        </li>
-                        <!-- DOC: To remove the sidebar toggler from the sidebar you just need to completely remove the below "sidebar-toggler-wrapper" LI element -->
-                        <!-- BEGIN SIDEBAR TOGGLER BUTTON -->
-                        @*
-                            <li class="sidebar-toggler-wrapper hide">
-                                <div class="sidebar-toggler">
-                                    <span></span>
-                                </div>
-                            </li>*@
-
-                        <!-- END SIDEBAR TOGGLER BUTTON -->
-                        @foreach (var route in validRoutes)
-                        {
-
-                            <li>
-                                <a [routerLink]="'@route.UrlFullPath'" class="nav-link nav-toggle" [routerLinkActive]="'left-nav-active'">
-                                    <img src="/themes/theme-default/images/nav/@route.Css" style="height: 25px;width: 30px;" />
-                                    <span class="title"><b>@route.DisplayName</b></span>
-                                    <span class="selected"></span>
-                                    @*<span class="arrow open"></span>*@
-                                </a>
+  .page-sidebar .page-sidebar-menu ul.sub-menu {
+    margin: 0px;
+  }
 
 
 
-                                @*show plus button only when there are child routes to be displayed*@
+  span.ad-sign:after {
+    position: absolute;
+    display: inline-block;
+    content: '\F107';
+    right: 5px;
+    top: 11px;
+    text-align: center;
+    background: transparent;
+    z-index: 22;
+    width: 24px;
+    height: 24px;
+    line-height: 20px;
+    font-weight: bold;
+    color: #ddd;
+    font-size: 12px;
+    transition: transform .25s linear;
+    -webkit-transition: -webkit-transform .25s linear;
+    font-family: 'fontAwesome';
+  }
 
-                                @if (route.ChildRoutes != null && route.ChildRoutes.Where(r => r.DefaultShow == true).Count() > 0)
-                                {<span data-toggle="collapse" data-target="#@route.DisplayName.Replace(" ","")" class="collapsed ad-sign"></span>
-                                    <ul class="sub-menu collapse" id="@route.DisplayName.Replace(" ","")">
-                                        @foreach (var childroute in route.ChildRoutes)
-                                        {
-                                            @if (childroute != null && !string.IsNullOrEmpty(childroute.DisplayName) && childroute.DefaultShow != false)
-                                            {
-                                                <li class="nav-item">
-                                                    <a [routerLink]="'@childroute.UrlFullPath'" class="nav-link" [routerLinkActive]="'left-nav-active'">
-                                                        <i class="icon-bulb"></i>
-                                                        <span class="title">@childroute.DisplayName</span>
-                                                        <span class="badge badge-success"></span>
-                                                    </a>
-                                                </li>
-                                            }
-                                        }
-                                    </ul>
-                                }
+  span.ad-sign.collapsed:after {
+    line-height: 24px !important;
+    content: '\F107';
+    -webkit-transform: rotate(00deg);
+    transform: rotate(00deg);
+  }
 
-                            </li>
+  span.ad-sign:after {
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
+  }
 
-                        }
+  /* .page-sidebar-menu-closed .page-sidebar-menu span.ad-sign {
+        display: none;
+    } */
 
-                    </ul>
+  ul.page-sidebar-menu-closed span.ad-sign {
+    display: none;
+  }
 
-                    <!-- END SIDEBAR MENU -->
-                    <!-- END SIDEBAR MENU -->
-                </div>
-                <!-- END SIDEBAR -->
-            </div>
-            <!-- END SIDEBAR -->
-            <!-- BEGIN CONTENT -->
-            <div class="page-content-wrapper">
+  ul.page-sidebar-menu>li {
+    position: relative;
+  }
 
-                <!-- BEGIN CONTENT BODY -->
-                <danphe-loading [loading]="loading"></danphe-loading>
-                <danphe-msgbox></danphe-msgbox>
-                <div [ngClass]="navService.showSideNav ? 'page-content':'cstm-pg-content' ">
-                    <div class="row" style="margin-left:0px !important; margin-right:0px !important;">
-                        <router-outlet (activate)="onActivate($event)"></router-outlet>
-                    </div>
-                    <!-- END CONTENT BODY -->
-                </div>
-            </div>
-            <!-- END CONTENT -->
+  .page-sidebar {
+    box-shadow: 0px 0px 20px #eee;
+  }
 
-        </div>
-        <!-- END CONTAINER -->
-        <!-- BEGIN FOOTER -->
-        <!-- END FOOTER -->
-    </div>
-    <script>
-        function filterSidebarMenu() {
-            var input = document.getElementById('sidebar-search-razor');
-            var filter = input.value.toLowerCase();
-            var menu = document.querySelector('.page-sidebar-menu');
-            var items = menu.querySelectorAll('li:not(.sidebar-search-wrapper)');
+  body>div.tooltip.fade.top.in {
+    display: none !important;
+  }
 
-            items.forEach(function (item) {
-                var titleElement = item.querySelector('.title');
-                if (!titleElement) return;
-                
-                var titleText = titleElement.innerText.toLowerCase();
-                var subMenu = item.querySelector('.sub-menu');
-                var matchFound = titleText.includes(filter);
+  span.title {
+    font-weight: normal;
+  }
 
-                if (subMenu) {
-                    var subItems = subMenu.querySelectorAll('li');
-                    var childMatch = false;
-                    subItems.forEach(function (subItem) {
-                        var subTitle = subItem.querySelector('.title').innerText.toLowerCase();
-                        if (subTitle.includes(filter)) {
-                            childMatch = true;
-                            subItem.style.display = "";
-                        } else {
-                            subItem.style.display = "none";
-                        }
-                    });
-                    if (childMatch) matchFound = true;
-                }
+  .sidebar-search-wrapper {
+    padding: 15px 12px;
+    background-color: transparent;
+    transition: all 0.3s;
+  }
 
-                if (matchFound) {
-                    item.style.display = "";
-                } else {
-                    item.style.display = "none";
-                }
-            });
-        }
-    </script>
-</body>
+  .page-sidebar-menu-closed .sidebar-search-wrapper {
+    display: none !important;
+  }
+
+  .sidebar-search-wrapper .input-group {
+    width: 100%;
+    position: relative;
+  }
+
+  .sidebar-search-wrapper .form-control {
+    height: 34px;
+    border-radius: 20px !important;
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    padding-left: 35px;
+    font-size: 13px;
+    color: #555;
+    width: 100%;
+    box-shadow: none;
+    transition: width 0.3s;
+  }
+
+  .sidebar-search-wrapper .form-control:focus {
+    border-color: #337ab7;
+    box-shadow: 0 0 5px rgba(51, 122, 183, 0.3);
+  }
+
+  .sidebar-search-wrapper::before {
+    content: '\f002';
+    font-family: 'FontAwesome';
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    z-index: 10;
+  }
+
+  /* ===== Modern flat sidebar overrides (scoped) ===== */
+  .page-header.navbar {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .page-header.navbar .page-logo {
+    height: 56px !important;
+    min-height: 56px !important;
+    display: flex;
+    align-items: center;
+    width: 320px;
+  }
+
+  .page-header.navbar .page-logo a {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    text-decoration: none !important;
+  }
+
+  .page-header.navbar .page-logo h3 {
+    margin: 0 !important;
+    padding-left: 12px;
+    line-height: 56px !important;
+    font-size: 34px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    letter-spacing: 0.4px;
+  }
+
+  .page-header.navbar .page-logo .menu-toggler.sidebar-toggler {
+    margin-left: auto;
+    margin-right: 10px;
+  }
+
+  .page-sidebar-wrapper {
+    width: 250px !important;
+    min-width: 250px !important;
+  }
+  .page-sidebar-wrapper .page-sidebar {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border-right: 1px solid #e5e7eb !important;
+    width: 250px !important;
+    min-width: 250px !important;
+  }
+  .page-content-wrapper .page-content {
+    margin-left: 250px !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .cstm-sidebar.page-sidebar-menu {
+    background: transparent !important;
+    padding: 10px 12px 14px 12px !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper {
+    padding: 12px 10px 10px 10px !important;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 2;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper::before {
+    left: 22px;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control {
+    border-radius: 12px !important;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding-left: 36px;
+    font-size: 14px;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .sidebar-search-wrapper .form-control:focus {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .page-sidebar-wrapper .page-sidebar .menu-section-title {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.7;
+    margin: 14px 8px 6px 8px;
+    color: inherit;
+  }
+  
+  ul.page-sidebar-menu > li > a {
+    border-top: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+    margin: 2px 0 !important;
+    background: transparent !important;
+    color: #111827 !important;
+    border-left: 2px solid transparent !important;
+    transition: background-color 120ms ease, color 120ms ease;
+    box-shadow: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a img {
+    height: 18px !important;
+    width: 18px !important;
+    margin: 0 !important;
+    opacity: 0.9;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .nav-fa-icon {
+    width: 20px;
+    min-width: 20px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+    color: #6b7280;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active .nav-fa-icon,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a .nav-fa-icon {
+    color: #1d4ed8;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a .title {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.05px;
+    color: inherit !important;
+    flex-grow: 1;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li > a.left-nav-active,
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu > li.open > a {
+    background: #e8f1ff !important;
+    border-left-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu {
+    margin: 2px 0 8px 22px !important;
+    padding: 4px 0 4px 0 !important;
+    border-left: 2px solid rgba(148, 163, 184, 0.25) !important;
+    background: transparent !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li {
+    border: none !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a {
+    border-radius: 6px !important;
+    padding: 7px 10px !important;
+    margin: 2px 0 2px 8px !important;
+    color: #4b5563 !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    display: flex;
+    align-items: center;
+    border: none !important;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+
+  .page-sidebar-wrapper .page-sidebar .page-sidebar-menu ul.sub-menu > li > a.left-nav-active {
+    background: rgba(59, 130, 246, 0.08) !important;
+    color: #1d4ed8 !important;
+    font-weight: 600;
+  }
+
+  /* cleaner expand/collapse chevron */
+  span.ad-sign:after {
+    color: #9ca3af !important;
+    position: relative !important;
+    top: auto;
+    right: auto;
+    font-size: 12px;
+  }
+
+  /* Make sidebar scroll look modern (where supported) */
+  .page-sidebar-wrapper .page-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
