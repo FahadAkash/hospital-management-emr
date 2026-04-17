@@ -3,6 +3,9 @@ import { PageNotFound } from './404-error/404-not-found.component';
 import { UnAuthorizedAccessComponent } from './account/unauthorizes-access.component';
 import { DashboardHomeComponent } from './dashboards/home/dashboard-home.component';
 import { DynamicReportComponent } from './dynamic-report/dynamic-report.component';
+import { PatientPortalHistoryComponent } from './patient-portal/patient-portal-history.component';
+import { PatientPortalLoginComponent } from './patient-portal/patient-portal-login.component';
+import { PatientPortalProfileComponent } from './patient-portal/patient-portal-profile.component';
 import { AuthGuardService } from './security/shared/auth-guard.service';
 import { ActivateInventoryComponent } from './shared/activate-inventory/activate-inventory.component';
 export const AppRoutingConstant = [
@@ -179,6 +182,9 @@ export const AppRoutingConstant = [
   },
   { path: "DynamicReport", component: DynamicReportComponent },
   { path: "UnAuthorized", component: UnAuthorizedAccessComponent },
+  { path: "PatientPortal/Login", component: PatientPortalLoginComponent },
+  { path: "PatientPortal/Profile", component: PatientPortalProfileComponent },
+  { path: "PatientPortal/History", component: PatientPortalHistoryComponent },
   { path: "Utilities", loadChildren: "./utilities/utilities.module#UtilitiesModule", canActivate: [AuthGuardService], data: { currentRoute: 'Utilities' } },
   { path: "MktReferral", loadChildren: "./mktreferral/mktreferral.module#MktreferralModule" },
 

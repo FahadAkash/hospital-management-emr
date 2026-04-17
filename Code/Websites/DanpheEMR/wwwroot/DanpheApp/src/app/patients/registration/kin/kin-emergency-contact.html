@@ -43,9 +43,9 @@
                 <div class="form-group">
                   <label class="control-label col-md-4">Phone Number<b>:</b></label>
                   <div class="col-md-8">
-                    <input class="form-control" maxlength="11" type="tel" formControlName="KinPhoneNumber" [(ngModel)]="currentKinEmergencyContact.KinPhoneNumber"
-                                   value="" placeholder="phone number" />
-                    <span class="color-red" *ngIf="currentKinEmergencyContact.IsDirty('KinPhoneNumber')" [hidden]="currentKinEmergencyContact.IsValidCheck('KinPhoneNumber','pattern')"> Phone Number is not proper</span> </div>
+                    <input class="form-control" maxlength="14" type="tel" formControlName="KinPhoneNumber" [(ngModel)]="currentKinEmergencyContact.KinPhoneNumber"
+                                   value="" placeholder="+8801XXXXXXXXX" />
+                    <span class="color-red" *ngIf="currentKinEmergencyContact.IsDirty('KinPhoneNumber')" [hidden]="currentKinEmergencyContact.IsValidCheck('KinPhoneNumber','pattern')">Use Bangladesh format: +8801XXXXXXXXX or 01XXXXXXXXX</span> </div>
                 </div>
                 <div class="form-group">
                   <label class="control-label col-md-4">Relationship<sup>*</sup><b>:</b></label>

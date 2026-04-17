@@ -41,6 +41,9 @@ import { DispensaryEndpoint } from "./dispensary/shared/dispensary.endpoint";
 import { DispensaryService } from "./dispensary/shared/dispensary.service";
 import { DynamicReportComponent } from "./dynamic-report/dynamic-report.component";
 import { EmployeeService } from "./employee/shared/employee.service";
+import { PatientPortalHistoryComponent } from "./patient-portal/patient-portal-history.component";
+import { PatientPortalLoginComponent } from "./patient-portal/patient-portal-login.component";
+import { PatientPortalProfileComponent } from "./patient-portal/patient-portal-profile.component";
 import { PatientsDLService } from "./patients/shared/patients.dl.service";
 import { ActivateInventoryGuardService } from "./shared/activate-inventory/activate-inventory-guard.service";
 import { ActivateInventoryComponent } from "./shared/activate-inventory/activate-inventory.component";
@@ -101,7 +104,10 @@ import { ActivateBillingCounterService } from "./utilities/shared/activate-billi
     UnAuthorizedAccessComponent,
     LoaderComponent,
     ActivateInventoryComponent,
-    DynamicReportComponent
+    DynamicReportComponent,
+    PatientPortalLoginComponent,
+    PatientPortalProfileComponent,
+    PatientPortalHistoryComponent
   ],
   bootstrap: [AppComponent],
 })

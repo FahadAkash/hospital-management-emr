@@ -56,7 +56,7 @@ export class KinEmergencyContact {
          this.KinValidator = _formBuilder.group({
              'KinFirstName': ['', Validators.required,],
              'KinLastName': ['', Validators.required,],
-             'KinPhoneNumber': ['', Validators.pattern('^[0-9]{1,10}$')],
+             'KinPhoneNumber': ['', Validators.pattern('^(\\+8801\\d{9}|01\\d{9})$')],
              'KinContactType': ['', Validators.required,],
              'RelationShip': ['', Validators.required,]        
 

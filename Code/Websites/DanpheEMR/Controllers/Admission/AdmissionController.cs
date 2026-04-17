@@ -3949,6 +3949,8 @@ namespace DanpheEMR.Controllers
         {
             AdmissionModel clientAdt = DanpheJSONConvert.DeserializeObject<AdmissionModel>(ipDataString);
 
+            ValidatePaymentBeforeBedAssignment(_admissionDbContext, clientAdt);
+
             if (IsValidForAdmission(_admissionDbContext, clientAdt.PatientId))
             {
                 var res = CreateAdmissionTransaction(_admissionDbContext, clientAdt, connString);
@@ -3990,6 +3992,48 @@ namespace DanpheEMR.Controllers
             else
             {
                 throw new Exception("Patient is already admitted.");
+            }
+        }
+
+        private void ValidatePaymentBeforeBedAssignment(AdmissionDbContext admissionDb, AdmissionModel admissionFromClient)
+        {
+            if (admissionFromClient == null || admissionFromClient.PatientId <= 0)
+            {
+                return;
+            }
+
+            // Allow admins to disable this hard stop by config parameter if needed.
+            bool requirePayment = true;
+            var requirePaymentParam = admissionDb.CFGParameters
+                .Where(p => p.ParameterGroupName.ToLower() == "adt" && p.ParameterName == "RequirePaymentBeforeBedAssign")
+                .Select(p => p.ParameterValue)
+                .FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(requirePaymentParam) && bool.TryParse(requirePaymentParam, out bool parsedValue))
+            {
+                requirePayment = parsedValue;
+            }
+
+            if (!requirePayment)
+            {
+                return;
+            }
+
+            // Insurance admission can proceed without cash deposit.
+            if (admissionFromClient.Ins_HasInsurance)
+            {
+                return;
+            }
+
+            decimal openingDepositBalance = admissionDb.BillDeposit
+                .Where(d => d.PatientId == admissionFromClient.PatientId)
+                .Select(d => d.DepositBalance)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            decimal currentDepositFromRequest = admissionFromClient.BilDeposit != null ? admissionFromClient.BilDeposit.InAmount : 0;
+            if (openingDepositBalance <= 0 && currentDepositFromRequest <= 0)
+            {
+                throw new Exception("Payment/deposit is required before assigning bed. Please take deposit in billing or enter admission deposit.");
             }
         }
         private void AddPatientCareTaker(AdmissionDbContext _admissionDbContext, CareofPerson_DTO patientCareTaker, int patientId)

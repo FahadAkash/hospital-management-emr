@@ -132,11 +132,11 @@
               <label class="control-label col-md-4">Phone number<sup
                      *ngIf="isPhoneNumberMandatory">*</sup><b>:</b></label>
               <div class="col-md-8">
-                <input class="form-control" type="tel" maxlength="11" id="PhoneNumber"
+                <input class="form-control" type="tel" maxlength="14" id="PhoneNumber"
                        (keyup.enter)="GoToNextInput('ddlDistrict')" [(ngModel)]="model.PhoneNumber"
-                       formControlName="PhoneNumber" placeholder="phone number" />
+                       formControlName="PhoneNumber" placeholder="+8801XXXXXXXXX" />
                 <span class="error-msg" *ngIf="model.IsDirty('PhoneNumber')"
-                      [hidden]="model.IsValidCheck('PhoneNumber','pattern')">Primary Phone is not proper</span> <span
+                      [hidden]="model.IsValidCheck('PhoneNumber','pattern')">Use Bangladesh format: +8801XXXXXXXXX or 01XXXXXXXXX</span> <span
                       class="error-msg" *ngIf="model.IsDirty('PhoneNumber')"
                       [hidden]="model.IsValidCheck('PhoneNumber','required')">Primary Phone is required</span>
               </div>

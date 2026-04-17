@@ -115,8 +115,14 @@ export class PatientBasicInfoComponent implements IRouteGuard {
   }
 
   GetCountry() {
-
-    this.Countries = DanpheCache.GetData(MasterType.Country, null)
+    this.Countries = DanpheCache.GetData(MasterType.Country, null);
+    if (this.Countries && this.Countries.length) {
+      this.Countries = this.Countries.sort((a, b) => {
+        if (a.CountryName === "Bangladesh") { return -1; }
+        if (b.CountryName === "Bangladesh") { return 1; }
+        return String(a.CountryName).localeCompare(String(b.CountryName));
+      });
+    }
 
   }
 

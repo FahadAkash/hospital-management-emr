@@ -1,0 +1,61 @@
+<div style="max-width:900px;margin:20px auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>Patient Portal - Profile</h3>
+    <div>
+      <button class="btn btn-default" (click)="goToHistory()">View History</button>
+      <button class="btn btn-danger" (click)="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="alert alert-success">{{message}}</div>
+  <div *ngIf="errorMessage" class="alert alert-danger">{{errorMessage}}</div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading"><strong>Profile Details</strong></div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-md-4 form-group">
+          <label>First Name</label>
+          <input class="form-control" [(ngModel)]="model.firstName" />
+        </div>
+        <div class="col-md-4 form-group">
+          <label>Middle Name</label>
+          <input class="form-control" [(ngModel)]="model.middleName" />
+        </div>
+        <div class="col-md-4 form-group">
+          <label>Last Name</label>
+          <input class="form-control" [(ngModel)]="model.lastName" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label>Phone Number (read-only)</label>
+          <input class="form-control" [(ngModel)]="model.phoneNumber" readonly />
+          <small class="text-muted">Phone number can only be changed by hospital staff.</small>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Profile Picture</label>
+          <input type="file" class="form-control" (change)="onProfilePicSelected($event.target.files)" />
+        </div>
+      </div>
+      <button class="btn btn-primary" (click)="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading"><strong>Change Password</strong></div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label>Current Password</label>
+          <input type="password" class="form-control" [(ngModel)]="passwordModel.currentPassword" />
+        </div>
+        <div class="col-md-6 form-group">
+          <label>New Password</label>
+          <input type="password" class="form-control" [(ngModel)]="passwordModel.newPassword" />
+        </div>
+      </div>
+      <button class="btn btn-warning" (click)="changePassword()">Change Password</button>
+    </div>
+  </div>
+</div>

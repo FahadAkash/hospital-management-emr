@@ -215,7 +215,7 @@ export class Patient {
       //sud:20mar'23--Make proper implementation of Municipality validation in all pages (Patient,Registration,Billing,etc) then only apply required validator.
       'Municipality': [''], // ['', Validators.required],
       'Email': ['', Validators.pattern('^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}$')],
-      'PhoneNumber': ['', Validators.compose([Validators.required, Validators.pattern('^[0-9]{1,10}$')])],
+      'PhoneNumber': ['', Validators.compose([Validators.required, Validators.pattern('^(\\+8801\\d{9}|01\\d{9})$')])],
       'PassportNumber': ['', Validators.compose([Validators.maxLength(12)])],
       'LandLineNumber': ['', Validators.compose([Validators.pattern('^[0-9]{1,9}$')])],
       'CountryId': ['', Validators.required],
@@ -320,7 +320,7 @@ export class Patient {
 
   public UpdatePhoneValidator(onOff: string, formControlName: string) {
     if (formControlName == "PhoneNumber" && onOff == "on") {
-      this.PatientValidator.controls['PhoneNumber'].validator = Validators.compose([Validators.required, Validators.pattern('^[0-9]{1,10}$')]);
+      this.PatientValidator.controls['PhoneNumber'].validator = Validators.compose([Validators.required, Validators.pattern('^(\\+8801\\d{9}|01\\d{9})$')]);
     } else {
       this.PatientValidator.controls['PhoneNumber'].validator = Validators.compose([]);
     }

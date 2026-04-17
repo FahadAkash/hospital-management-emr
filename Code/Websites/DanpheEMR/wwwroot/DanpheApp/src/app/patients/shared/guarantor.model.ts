@@ -72,7 +72,7 @@ export class Guarantor {
             'GuarantorName': [null, Validators.required,],
             'PatientRelationship': [null, Validators.required,],
             'GuarantorDateOfBirth': [null, dateValidators,],
-            'GuarantorPhoneNumber': ['', Validators.pattern('^[0-9]{1,10}$')],
+            'GuarantorPhoneNumber': ['', Validators.pattern('^(\\+8801\\d{9}|01\\d{9})$')],
 
         });
 

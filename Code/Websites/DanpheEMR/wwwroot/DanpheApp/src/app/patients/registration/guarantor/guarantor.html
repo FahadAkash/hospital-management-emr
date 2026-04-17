@@ -71,10 +71,10 @@
             <div class="form-group">
               <label class="control-label col-md-4">Phone number<b style="float:right;">:</b></label>
               <div class="col-md-8">
-                <input class="form-control" type="tel" maxlength="11" [(ngModel)]="guarantor.GuarantorPhoneNumber"
-                       formControlName="GuarantorPhoneNumber" placeholder="phone number" />
+                <input class="form-control" type="tel" maxlength="14" [(ngModel)]="guarantor.GuarantorPhoneNumber"
+                       formControlName="GuarantorPhoneNumber" placeholder="+8801XXXXXXXXX" />
                 <span class="color-red" *ngIf="guarantor.IsDirty('GuarantorPhoneNumber')"
-                      [hidden]="guarantor.IsValidCheck('GuarantorPhoneNumber','pattern')">Primary Phone is not proper</span>
+                      [hidden]="guarantor.IsValidCheck('GuarantorPhoneNumber','pattern')">Use Bangladesh format: +8801XXXXXXXXX or 01XXXXXXXXX</span>
               </div>
             </div>
             <div class="form-group">

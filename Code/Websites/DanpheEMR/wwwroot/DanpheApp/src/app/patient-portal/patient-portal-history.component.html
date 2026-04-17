@@ -1,0 +1,77 @@
+<div style="max-width:1100px;margin:20px auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>Patient Portal - History</h3>
+    <button class="btn btn-default" (click)="goProfile()">Back to Profile</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">{{errorMessage}}</div>
+  <div *ngIf="!data && !errorMessage">Loading...</div>
+
+  <div *ngIf="data">
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Yearly Purchases</strong></div>
+      <table class="table table-bordered">
+        <thead><tr><th>Year</th><th>Invoices</th><th>Total Purchase</th><th>Total Paid</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let y of data.YearlyPurchases">
+            <td>{{y.Year}}</td><td>{{y.InvoiceCount}}</td><td>{{y.TotalPurchaseAmount}}</td><td>{{y.TotalPaidAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Billing / Purchases</strong></div>
+      <table class="table table-striped table-bordered">
+        <thead><tr><th>Date</th><th>Invoice</th><th>Status</th><th>Total</th><th>Paid</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let b of data.Billing">
+            <td>{{b.CreatedOn | date:'yyyy-MM-dd'}}</td><td>{{b.InvoiceNo}}</td><td>{{b.BillStatus}}</td><td>{{b.TotalAmount}}</td><td>{{b.PaidAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Visits</strong></div>
+      <table class="table table-striped table-bordered">
+        <thead><tr><th>Date</th><th>Visit Code</th><th>Type</th><th>Status</th><th>Doctor</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let v of data.Visits">
+            <td>{{v.VisitDate | date:'yyyy-MM-dd'}}</td><td>{{v.VisitCode}}</td><td>{{v.VisitType}}</td><td>{{v.VisitStatus}}</td><td>{{v.PerformerName}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Admissions & Beds</strong></div>
+      <table class="table table-striped table-bordered">
+        <thead><tr><th>Admission Date</th><th>Discharge Date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let a of data.Admissions">
+            <td>{{a.AdmissionDate | date:'yyyy-MM-dd'}}</td><td>{{a.DischargeDate | date:'yyyy-MM-dd'}}</td><td>{{a.AdmissionStatus}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"><strong>Lab / Radiology / Prescriptions</strong></div>
+      <div class="row" style="padding:10px;">
+        <div class="col-md-4">
+          <h5>Lab</h5>
+          <ul><li *ngFor="let l of data.Lab">{{l.LabTestName}} - {{l.OrderDateTime | date:'yyyy-MM-dd'}}</li></ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Radiology</h5>
+          <ul><li *ngFor="let r of data.Radiology">{{r.ImagingItemName}} - {{r.ImagingDate | date:'yyyy-MM-dd'}}</li></ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Prescriptions</h5>
+          <ul><li *ngFor="let p of data.Prescriptions">{{p.MedicationId}} - {{p.Dose}} - {{p.CreatedOn | date:'yyyy-MM-dd'}}</li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

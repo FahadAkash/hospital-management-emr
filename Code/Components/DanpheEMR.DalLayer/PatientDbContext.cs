@@ -39,6 +39,8 @@ namespace DanpheEMR.DalLayer
         public DbSet<MedicareMember> MedicareMembers { get; set; }
         public DbSet<MedicareMemberBalance> MedicareMemberBalances { get; set; }
         public DbSet<PatientSchemeMapModel> PatientMapPriceCategories { get; set; }
+        public DbSet<PatientPortalUserModel> PatientPortalUsers { get; set; }
+        public DbSet<PatientPortalOtpModel> PatientPortalOtps { get; set; }
         public PatientDbContext(string conn) : base(conn)
         {
             this.Configuration.LazyLoadingEnabled = true;
@@ -189,6 +191,8 @@ namespace DanpheEMR.DalLayer
             modelBuilder.Entity<MedicareMember>().ToTable("INS_MedicareMember");
             modelBuilder.Entity<MedicareMemberBalance>().ToTable("INS_MedicareMemberBalance");
             modelBuilder.Entity<PatientSchemeMapModel>().ToTable("PAT_MAP_PatientSchemes");
+            modelBuilder.Entity<PatientPortalUserModel>().ToTable("PAT_PortalUser");
+            modelBuilder.Entity<PatientPortalOtpModel>().ToTable("PAT_PortalOtp");
 
         }
     }

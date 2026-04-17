@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 
@@ -37,6 +38,8 @@ export class PatientRegistrationMainComponent {
 
   public currPatient: Patient = null;
   public isPhoneMandatory: boolean = false;
+  public portalPassword: string = "";
+  public portalLoading: boolean = false;
 
 
 
@@ -53,7 +56,8 @@ export class PatientRegistrationMainComponent {
     public patientBLService: PatientsBLService,
     public msgBoxServ: MessageboxService,
     public securityService: SecurityService,
-    public coreService: CoreService
+    public coreService: CoreService,
+    public http: HttpClient
   ) {
     //get the chld routes of Patient registration main from valid routes available for this user.
     this.validRoutes = this.securityService.GetChildRoutes("Patient/RegisterPatient");
@@ -432,5 +436,55 @@ export class PatientRegistrationMainComponent {
       this.showExstingPatientListPage = false;
     }
     this.loading = false;
+  }
+
+  public createPatientPortalAccount(): void {
+    if (!this.Patient || !this.Patient.PatientId) {
+      this.msgBoxServ.showMessage("notice-message", ["Please save patient first, then create portal account."]);
+      return;
+    }
+    if (!this.Patient.PhoneNumber) {
+      this.msgBoxServ.showMessage("notice-message", ["Patient phone number is required to create portal account."]);
+      return;
+    }
+    if (!this.portalPassword || this.portalPassword.trim().length < 6) {
+      this.msgBoxServ.showMessage("notice-message", ["Please enter a password of at least 6 characters."]);
+      return;
+    }
+
+    this.portalLoading = true;
+    const payload = {
+      patientId: this.Patient.PatientId,
+      phoneNumber: this.Patient.PhoneNumber,
+      password: this.portalPassword
+    };
+    this.http.post<any>("/api/PatientPortal/RegisterByAdminInvite", payload).subscribe(
+      res => {
+        this.portalLoading = false;
+        if (res && res.Status === "OK") {
+          this.msgBoxServ.showMessage("success", ["Patient portal account created successfully."]);
+          this.portalPassword = "";
+        } else {
+          this.msgBoxServ.showMessage("error", [res && res.ErrorMessage ? res.ErrorMessage : "Failed to create portal account."]);
+        }
+      },
+      (err) => {
+        this.portalLoading = false;
+        let errMsg = "Failed to create portal account.";
+        if (err && err.error) {
+          try {
+            if (typeof err.error === "string") {
+              const parsed = JSON.parse(err.error);
+              errMsg = parsed.ErrorMessage || parsed.error || err.error || errMsg;
+            } else {
+              errMsg = err.error.ErrorMessage || err.error.error || err.message || errMsg;
+            }
+          } catch {
+            errMsg = err.error.ErrorMessage || err.error.error || err.message || errMsg;
+          }
+        }
+        this.msgBoxServ.showMessage("error", [errMsg]);
+      }
+    );
   }
 }

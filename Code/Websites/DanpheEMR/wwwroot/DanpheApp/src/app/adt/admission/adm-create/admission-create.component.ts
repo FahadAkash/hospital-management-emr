@@ -837,8 +837,8 @@ export class AdmissionCreateComponent {
             }
             else {
               this.loading = false;
-              // this.CurrentAdmission.BillingTransaction.BillingTransactionItems = [];
-              this.msgBoxServ.showMessage("failed", ["Failed to admit patient."]);
+              const errMsg = res && res.ErrorMessage ? res.ErrorMessage : "Failed to admit patient.";
+              this.msgBoxServ.showMessage("failed", [errMsg]);
               console.log(res.ErrorMessage);
               this.coreService.loading = false;
             }

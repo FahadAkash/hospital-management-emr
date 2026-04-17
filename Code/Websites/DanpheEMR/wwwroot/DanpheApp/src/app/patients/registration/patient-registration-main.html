@@ -26,6 +26,32 @@
 </div>
 <router-outlet></router-outlet>
 
+<div class="portlet light bordered" style="margin-top:12px;" *ngIf="patientService.globalPatient.PatientId != 0">
+    <div class="portlet-title">
+        <div class="caption">
+            <span class="caption-subject bold">Patient Portal Account (Staff Action)</span>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-4 form-group">
+                <label>Patient Phone (read from patient record)</label>
+                <input class="form-control" [value]="Patient.PhoneNumber" readonly />
+            </div>
+            <div class="col-md-4 form-group">
+                <label>Set Portal Password</label>
+                <input type="password" class="form-control" [(ngModel)]="portalPassword" placeholder="Enter initial password" />
+            </div>
+            <div class="col-md-4 form-group" style="padding-top:24px;">
+                <button class="btn btn-primary" [disabled]="portalLoading" (click)="createPatientPortalAccount()">
+                    {{portalLoading ? 'Creating...' : 'Create/Reset Portal Account'}}
+                </button>
+            </div>
+        </div>
+        <small class="text-muted">Patient can login using phone number or patient code. Phone number change is not allowed from patient portal.</small>
+    </div>
+</div>
+
 <patient-duplicate-warning-box *ngIf="showExstingPatientListPage"
                                [matchedPatResult]="matchedPatResult"
                                [currentPatInfo]="Patient"
