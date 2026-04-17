@@ -2,7 +2,7 @@ import { FormBuilder, Validators, FormControl } from "@angular/forms";
 import * as moment from 'moment/moment';
 
 export class EmployeeLeaveModel{
-    public EmpLeaveRuleId : number = 0;
+    public EmpLeaveId : number = 0;
     public LeaveRuleId:number = 0;
     public Date: string = "";
     public CreatedBy: number = 0;

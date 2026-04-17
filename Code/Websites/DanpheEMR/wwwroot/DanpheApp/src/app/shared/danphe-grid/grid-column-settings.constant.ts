@@ -61,15 +61,18 @@ export default class GridColumnSettings {
       cellRenderer: GridColumnSettings.CancelledDateOnlyRenderer,
     },
     { headerName: "Cancelled By", field: "CancelledBy", width: 100 },
-    // {
-    //   headerName: "Action",
-    //   field: "",
-    //   width: 100,
-    //   // template:
-    //   //   `<a danphe-grid-action="edit" class="grid-action">
-    //   //           Edit
-    //   //        </a>`
-    // }
+    {
+      headerName: "Action",
+      field: "",
+      width: 150,
+      template:
+        `<a danphe-grid-action="approve" class="grid-action" style="background-color: #26a69a !important;">
+                Approve
+             </a>
+             <a danphe-grid-action="cancel" class="grid-action" style="background-color: #ef4836 !important;">
+                Cancel
+             </a>`
+    }
   ];
 
   static LeaveCategoryList = [

@@ -80,5 +80,7 @@ export class PayrollDLService {
   public putChangeAttendance(data) {
     return this.http.put<any>('/api/Payroll?reqType=put-changed-attendance', data, this.options);
   }
-
+  public UpdateLeaveStatus(data) {
+    return this.http.put<any>('/api/Payroll?reqType=update-leave-status', data, this.options);
+  }
 }

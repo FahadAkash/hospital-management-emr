@@ -172,4 +172,12 @@ export class PayrollBLService {
                 return res
             }));
     }
+
+    public UpdateLeaveStatus(leaveRequest: EmployeeLeaveModel) {
+        var data = JSON.stringify(_.omit(leaveRequest, ['EmployeeLeaveValidator']));
+        return this.payrollDLService.UpdateLeaveStatus(data)
+            .pipe(map(res => {
+                return res
+            }));
+    }
 }

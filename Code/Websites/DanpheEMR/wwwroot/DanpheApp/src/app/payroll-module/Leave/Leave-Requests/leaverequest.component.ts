@@ -162,4 +162,37 @@ export class LeaveRequestComponent {
               }
           });
   }
+
+  LeaveRequestActions(event: GridEmitModel) {
+    switch (event.Action) {
+      case "approve": {
+        this.UpdateLeaveStatus(event.Data, "approved");
+        break;
+      }
+      case "cancel": {
+        this.UpdateLeaveStatus(event.Data, "cancelled");
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  UpdateLeaveStatus(data: any, status: string) {
+    let leaveRequest: EmployeeLeaveModel = new EmployeeLeaveModel();
+    leaveRequest.EmpLeaveId = data.EmployeeLeaveId;
+    leaveRequest.LeaveStatus = status;
+
+    this.payrollBLService.UpdateLeaveStatus(leaveRequest)
+      .subscribe(res => {
+        if (res.Status == "OK") {
+          this.messageboxService.showMessage("success", ["Leave Request " + status + " successfully."]);
+          this.OnSelectStatus("all");
+        }
+        else {
+          this.messageboxService.showMessage("failed", ["Failed to update leave status."]);
+          console.log(res.ErrorMessage);
+        }
+      });
+  }
 }

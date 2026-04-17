@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -679,6 +679,32 @@ namespace DanpheEMR.Controllers
                     payrollDbContext.Entry(leaveRuleModelDB).State = EntityState.Modified;
                     payrollDbContext.SaveChanges();
                     responseData.Status = "OK";
+                }
+                else if (reqType == "update-leave-status")
+                {
+                    EmployeeLeaveModel leaveRequest = DanpheJSONConvert.DeserializeObject<EmployeeLeaveModel>(str);
+                    if (leaveRequest != null)
+                    {
+                        var leaveFromDB = payrollDbContext.employeeLeaveModels.Where(a => a.EmpLeaveId == leaveRequest.EmpLeaveId).FirstOrDefault();
+                        if (leaveFromDB != null)
+                        {
+                            leaveFromDB.LeaveStatus = leaveRequest.LeaveStatus;
+                            if (leaveRequest.LeaveStatus == "approved")
+                            {
+                                leaveFromDB.ApprovedBy = currentUser.EmployeeId;
+                                leaveFromDB.ApprovedOn = DateTime.Now;
+                            }
+                            else if (leaveRequest.LeaveStatus == "cancelled")
+                            {
+                                leaveFromDB.CancelledBy = currentUser.EmployeeId;
+                                leaveFromDB.CancelledOn = DateTime.Now;
+                            }
+                            payrollDbContext.Entry(leaveFromDB).State = EntityState.Modified;
+                            payrollDbContext.SaveChanges();
+                            responseData.Status = "OK";
+                            responseData.Results = leaveFromDB;
+                        }
+                    }
                 }
                 else if (reqType == "PutLeaveCategory")
                 {
