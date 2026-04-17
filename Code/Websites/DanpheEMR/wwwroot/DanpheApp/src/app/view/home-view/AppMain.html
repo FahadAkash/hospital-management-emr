@@ -403,14 +403,6 @@
         <div class="top-menu">
 
           <ul class="nav navbar-nav pull-right">
-            <li *ngIf="coreService.appVersionNum" style="background-color: yellow;">
-              <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown"
-                 data-close-others="true">
-                <span class="username-hide-on-mobile" style="color: black;font-weight: bold !important;">
-                  {{coreService.appVersionNum}}
-                </span>
-              </a>
-            </li>
             <li title="My notifications">
               <notification-icon>
 
@@ -459,12 +451,6 @@
             <!-- END USER LOGIN DROPDOWN -->
 
             <li class="dropdown tooltip">
-              <!-- @*sud:24Dec-to display application's current version information on tooltip*@-->
-              <span *ngIf="coreService.appVersionNum" class="tooltiptext ttptextdown"
-                    style="width: 150px;margin-left: -75px;text-align: left;">
-                <i class="fa fa-info"></i>
-                {{coreService.appVersionNum}}
-              </span>
               <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown"
                  data-close-others="true">
                 <i class="fa fa-question-circle help-about"></i>

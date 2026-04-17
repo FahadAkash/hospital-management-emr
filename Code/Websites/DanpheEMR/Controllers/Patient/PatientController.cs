@@ -662,7 +662,7 @@ namespace DanpheEMR.Controllers
         {
             // else part of previous Patient Put API
             string str = this.ReadPostData();
-            RbacUser currentUser = HttpContext.Session.Get<RbacUser>("currentuser");
+            RbacUser currentUser = GetCurrentUserFromSessionOrJwt();
             Func<object> func = () => UpdateNormalPatient(str, currentUser);
             return InvokeHttpPostFunction<object>(func);
         }
@@ -2356,15 +2356,24 @@ namespace DanpheEMR.Controllers
         {
 
             PatientModel objFromClient = JsonConvert.DeserializeObject<PatientModel>(postStringContent);
+            if (objFromClient == null)
+            {
+                throw new InvalidOperationException("Patient data is missing or invalid.");
+            }
             // map all the entities we want to update.
             // OwnedCollection for list, OwnedEntity for one-one navigational property
             // test it thoroughly, also with sql-profiler on how it generates the code
 
             //sud: 15Aug'18--need to update modifiedon field when anything is changed.
-            if (objFromClient != null)
+            objFromClient.ModifiedOn = DateTime.Now;
+            if (currentUser != null)
             {
-                objFromClient.ModifiedOn = DateTime.Now;
+                objFromClient.ModifiedBy = currentUser.EmployeeId;
             }
+
+            // PatientById includes Visits/Admissions/etc. for display. GraphDiff only updates Addresses, Kin, Insurances, Guarantor.
+            // Round-tripping other graphs causes EF/GraphDiff to fail on SaveChanges (often surfaced as 500 if something escapes the usual handler).
+            StripPatientNavigationsNotUpdatedByGraph(objFromClient);
 
             objFromClient = _patientDbContext.UpdateGraph(objFromClient,
                 map => map.OwnedCollection(a => a.Addresses)
@@ -2389,6 +2398,34 @@ namespace DanpheEMR.Controllers
             _patientDbContext.Entry(objFromClient).Property(u => u.MotherName).IsModified = false;
             _patientDbContext.SaveChanges();
             return "patient information updated successfully.";
+        }
+
+        /// <summary>
+        /// Clear navigations that are not part of UpdateGraph so deserialized client payloads do not attach unrelated entities.
+        /// </summary>
+        private static void StripPatientNavigationsNotUpdatedByGraph(PatientModel p)
+        {
+            if (p == null)
+            {
+                return;
+            }
+            p.Visits = null;
+            p.Admissions = null;
+            p.Allergies = null;
+            p.Problems = null;
+            p.PastMedicals = null;
+            p.FamilyHistory = null;
+            p.SurgicalHistory = null;
+            p.SocialHistory = null;
+            p.HomeMedication = null;
+            p.MedicationPrescriptions = null;
+            p.ImagingReports = null;
+            p.ImagingItemRequisitions = null;
+            p.LabRequisitions = null;
+            p.Vitals = null;
+            p.Notes = null;
+            p.UploadedFiles = null;
+            p.CountrySubDivision = null;
         }
     }
 }

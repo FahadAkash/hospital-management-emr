@@ -227,4 +227,79 @@ namespace DanpheEMR.Controllers
         }
     }
 
+    /// <summary>
+    /// Permission-based authorization for API actions.
+    /// - Reads currentUser from JWT Authorization header (same claim used in DanpheDataFilter).
+    /// - Allows access if user has ANY of the provided permission names.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public class DanphePermissionFilter : ActionFilterAttribute
+    {
+        private readonly string[] _permissionNames;
+
+        public DanphePermissionFilter(params string[] permissionNames)
+        {
+            _permissionNames = permissionNames ?? Array.Empty<string>();
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            base.OnActionExecuting(context);
+            try
+            {
+                var currentUser = GetCurrentUserFromToken(context.HttpContext);
+                if (currentUser == null)
+                {
+                    context.Result = new JsonResult(new DanpheHTTPResponse<object> { Status = "Failed", ErrorMessage = "Unauthorized Access", Results = "" });
+                    return;
+                }
+
+                // If no permission was specified, treat as authenticated-only (do not block).
+                if (_permissionNames.Length == 0)
+                {
+                    return;
+                }
+
+                // Allow if user has any of the required permissions.
+                var hasAny = _permissionNames.Any(p => !string.IsNullOrWhiteSpace(p) && RBAC.UserHasPermission(currentUser.UserId, p));
+                if (!hasAny)
+                {
+                    context.Result = new JsonResult(new DanpheHTTPResponse<object> { Status = "Failed", ErrorMessage = "Unauthorized Access", Results = "" });
+                    return;
+                }
+            }
+            catch
+            {
+                context.Result = new JsonResult(new DanpheHTTPResponse<object> { Status = "Failed", ErrorMessage = "Unauthorized Access", Results = "" });
+                return;
+            }
+        }
+
+        private static RbacUser GetCurrentUserFromToken(HttpContext httpContext)
+        {
+            try
+            {
+                if (httpContext == null) { return null; }
+                string tokenFromHeader = httpContext.Request.Headers["Authorization"];
+                if (string.IsNullOrWhiteSpace(tokenFromHeader)) { return null; }
+
+                var parts = tokenFromHeader.Split(' ');
+                if (parts.Length < 2) { return null; }
+                var tokenWithoutBearer = parts[1];
+
+                var handler = new JwtSecurityTokenHandler();
+                var jwtSecurityToken = handler.ReadJwtToken(tokenWithoutBearer);
+                var userClaim = jwtSecurityToken.Claims.Where(claim => claim.Type == ENUM_ClaimTypes.currentUser).FirstOrDefault()?.Value;
+                if (string.IsNullOrWhiteSpace(userClaim)) { return null; }
+
+                var loggedInUserDetail = DanpheJSONConvert.DeserializeObject<RbacUser>(userClaim);
+                return loggedInUserDetail;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
 }

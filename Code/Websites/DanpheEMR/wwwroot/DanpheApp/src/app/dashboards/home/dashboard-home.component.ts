@@ -1,527 +1,619 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core'
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Chart } from 'chart.js';
-import { DanpheChartsService } from '../../dashboards/shared/danphe-charts.service';
-import { DLService } from "../../shared/dl.service";
 import * as moment from 'moment/moment';
+
 import { forkJoin } from 'rxjs';
-import { CoreService } from '../../core/shared/core.service'
+import { SecurityService } from '../../security/shared/security.service';
+import { CoreService } from '../../core/shared/core.service';
+import { DLService } from '../../shared/dl.service';
 
-type DashboardChartMap = {
-  patientDaily?: any;
-  treatmentCost?: any;
-  departmentWise?: any;
-  labTrending?: any;
-  labMembership?: any;
-  billingMembership?: any;
-  billingRank?: any;
-};
-
-type SummaryRow = {
-  Label?: string;
-  Total?: number;
-};
-
-type DepartmentAppointment = {
-  DepartmentName: string;
-  AppointmentCount: number;
-};
-
-type PatientDailyCount = {
-  Label: string;
-  PatientCount: number;
-  VisitType: string;
-};
-
-type TreatmentCostRow = {
-  Gender: string;
-  AgeRange: string;
-  Total: number;
-};
-
-type HospitalManagementRow = {
-  Label: string;
-  Count: number;
-  Percentage?: number;
-};
-
-type WardSummary = {
-  Ward: string;
-  InBed: number;
-  NewAdmission: number;
-  TransIn: number;
-  TransOut: number;
-  Discharged: number;
-  Total: number;
-};
-
-type EmergencySummary = {
-  TotalRegisteredPatients: number;
-  MildPatients: number;
-  ModeratePatients: number;
-  CriticalPatients: number;
-  DeathPatients: number;
-  TotalTriagedPatients: number;
-  LAMAPatients: number;
-  AdmittedPatients: number;
-  TransferredPatients: number;
-  DischargedPatients: number;
-  TotalFinalizedPatients: number;
-};
-
-type MembershipCountRow = {
-  MembershipTypeName: string;
-  TotalCount?: number;
-  Total?: number;
-};
-
-type RankCountRow = {
-  Rank: string;
-  Total?: number;
-};
-
-type TrendingTestRow = {
-  LabTestName: string;
-  Counts: number;
-};
-
-type BillingMembershipRow = {
-  MembershipTypeName: string;
-  Total: number;
-};
-
-type DashboardPanel = {
-  key: string;
-  title: string;
-  subtitle: string;
-  fromDate: string;
-  toDate: string;
-  loading: boolean;
-  patientCards: SummaryRow[];
-  doctorCards: SummaryRow[];
-  readmissionCards: SummaryRow[];
-  patientCountByDay: PatientDailyCount[];
-  treatmentCostRows: TreatmentCostRow[];
-  departmentAppointments: DepartmentAppointment[];
-  hospitalManagement: HospitalManagementRow[];
-  wardSummary: WardSummary[];
-  totalAdmittedPatients: number;
-  totalDischargedPatients: number;
-  emergencySummary: EmergencySummary;
-  labMembership: MembershipCountRow[];
-  labTrending: TrendingTestRow[];
-  billingMembership: BillingMembershipRow[];
-  billingRank: RankCountRow[];
-};
 @Component({
   selector: 'my-app',
-  templateUrl: "./dashboard-home.html",
-  styleUrls: ["./dashboard-home.component.css"]
+  templateUrl: './dashboard-home.html',
+  styleUrls: ['./dashboard-home.component.css']
 })
+export class DashboardHomeComponent implements OnInit, OnDestroy {
 
+  public currentDate: string = '';
+  public lastRefreshed: string = '';
+  public loading: boolean = false;
 
-export class DashboardHomeComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('carouselContainer') carouselContainer: ElementRef;
+  // Role-based visibility
+  public showRevenueAnalytics: boolean = true;
+  public showClinicalAnalytics: boolean = true;
 
-  public currentDate: string = "";
-  public showCountryMap: boolean = true;
-  public activePanelIndex: number = 0;
-  public panels: DashboardPanel[] = [];
-  private chartRefs: { [key: string]: DashboardChartMap } = {};
-  private colorPalette: string[] = ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#26A69A', '#546E7A', '#D10CE8'];
+  // (Optional) finer-grained visibility; currently mapped into the two flags above
+  public showTopDoctors: boolean = true;
+  public showDepartmentRevenueChart: boolean = true;
+
+  // KPI values
+  public todayPatientCount: number = 0;
+  public yesterdayPatientCount: number = 0;
+  public patientTrend: number = 0;
+  public todayRevenue: number = 0;
+  public occupiedBeds: number = 0;
+  public erToday: number = 0;
+
+  // Data arrays
+  public topDoctors: any[] = [];
+  public wardSummary: any[] = [];
+  public emergencySummary: any = null;
+
+  // Chart instances
+  private patientTrendChart: any = null;
+  private patientDistributionChart: any = null;
+  private deptRevenueChart: any = null;
+  private deptAppointmentChart: any = null;
+  private labTrendChart: any = null;
+
+  // Color palette
+  private colors = ['#3b82f6', '#22c55e', '#f97316', '#ef4444', '#8b5cf6', '#14b8a6', '#ec4899', '#6366f1', '#f59e0b', '#06b6d4'];
 
   constructor(
-    public danpheCharts: DanpheChartsService,
-    public dlService: DLService,
     public coreService: CoreService,
-    public changeDetector: ChangeDetectorRef
+    public dlService: DLService,
+    public changeDetector: ChangeDetectorRef,
+    public router: Router,
+    public securityService: SecurityService
   ) {
-    this.currentDate = moment().format("DD-MM-YYYY");
-    this.showCountryMap = this.coreService.showCountryMapOnLandingPage;
+    this.currentDate = moment().format('ddd, DD MMM YYYY');
   }
 
   ngOnInit() {
-    this.panels = this.buildPanels();
-    this.panels.forEach(panel => this.loadAnalyticsForRange(panel));
+    this.resolveDashboardVisibility();
+    this.refreshAll();
   }
 
-  ngAfterViewInit() {
-    this.scrollToPanel(this.activePanelIndex);
+  private resolveDashboardVisibility() {
+    const user = this.securityService.GetLoggedInUser();
+    
+    // If we can't get the user for some reason, default to showing everything
+    if (!user) {
+      this.showRevenueAnalytics = true;
+      this.showClinicalAnalytics = true;
+      this.showTopDoctors = true;
+      this.showDepartmentRevenueChart = true;
+      return;
+    }
+
+    if (user.IsSystemAdmin || (user.UserName && user.UserName.toLowerCase() === 'admin')) {
+      this.showRevenueAnalytics = true;
+      this.showClinicalAnalytics = true;
+      this.showTopDoctors = true;
+      this.showDepartmentRevenueChart = true;
+      return;
+    }
+
+    // Primary: use RBAC permissions (exact permissions mapped to roles).
+    // Fallback: use RBAC navigation routes (also tied to permissions/role via RouteConfig).
+    const canSeePermission = (permissionName: string): boolean => {
+      try {
+        return !!permissionName && this.securityService.HasPermission(permissionName);
+      } catch (e) {
+        return false;
+      }
+    };
+
+    // Fallback helper (route visibility is also permission-driven in this app)
+    // Note: `UserNavigations[].UrlFullPath` is stored without leading slash in this app.
+    const canSee = (urlFullPath: string): boolean => {
+      try {
+        const filtered = (urlFullPath || '').startsWith('/') ? urlFullPath.substring(1) : (urlFullPath || '');
+        if (!filtered) { return false; }
+        const navs: any[] = (this.securityService.UserNavigations as any) || [];
+        return navs.some(n => (n && n.UrlFullPath) === filtered);
+      } catch (e) {
+        return false;
+      }
+    };
+
+    // Revenue-related widgets are based on Billing Reports access.
+    const canSeeDeptRevenue =
+      canSeePermission('Reports/BillingMain/DepartmentSummary') ||
+      canSeePermission('Reports/BillingMain/DepartmentRevenue') ||
+      canSee('/Reports/BillingMain/DepartmentSummary') ||
+      canSee('/Reports/BillingMain/DepartmentRevenue');
+
+    const canSeeDoctorRevenue =
+      canSeePermission('Reports/BillingMain/DoctorRevenue') ||
+      canSee('/Reports/BillingMain/DoctorRevenue');
+
+    this.showDepartmentRevenueChart = canSeeDeptRevenue;
+    this.showTopDoctors = canSeeDoctorRevenue;
+    this.showRevenueAnalytics = this.showDepartmentRevenueChart || this.showTopDoctors;
+
+    // Clinical widgets are based on clinical module access.
+    // (Doctors should keep seeing clinical analytics; finance-only users can still see clinical if they have access.)
+    const canSeeClinical =
+      canSee('/Doctors') ||
+      canSee('/Patient') ||
+      canSee('/Appointment') ||
+      canSee('/ADTMain') ||
+      canSee('/Emergency') ||
+      canSee('/Reports/AppointmentMain') ||
+      canSee('/Reports/AdmissionMain') ||
+      canSee('/Reports/LabMain');
+    this.showClinicalAnalytics = canSeeClinical;
+
+    // Fallback: if navs aren't loaded yet (or custom routes), fall back to position keywords.
+    // This preserves current behavior and still gives you "based on position" behavior.
+    if (!this.showClinicalAnalytics && !this.showRevenueAnalytics) {
+      if (user.Employee) {
+        const dept = (user.Employee.DepartmentName || '').toLowerCase();
+        const role = (user.Employee.EmployeeRoleName || '').toLowerCase();
+
+        if (dept.includes('doctor') || dept.includes('nurse') || dept.includes('clinical') || role.includes('doctor') || role.includes('nurse')) {
+          this.showClinicalAnalytics = true;
+        }
+        if (dept.includes('account') || dept.includes('billing') || dept.includes('finance') || role.includes('account') || role.includes('billing')) {
+          this.showRevenueAnalytics = true;
+          this.showDepartmentRevenueChart = true;
+          this.showTopDoctors = true;
+        }
+        if (dept.includes('admin') || role.includes('admin')) {
+          this.showClinicalAnalytics = true;
+          this.showRevenueAnalytics = true;
+          this.showDepartmentRevenueChart = true;
+          this.showTopDoctors = true;
+        }
+      }
+    }
+
+    // Final fallback: don't blank the dashboard entirely.
+    if (!this.showClinicalAnalytics && !this.showRevenueAnalytics) {
+      this.showClinicalAnalytics = true;
+    }
   }
 
   ngOnDestroy() {
-    Object.keys(this.chartRefs).forEach(key => this.destroyCharts(key));
+    this.destroyAllCharts();
   }
 
-  public setActivePanel(index: number) {
-    this.activePanelIndex = index;
-    this.scrollToPanel(index);
-  }
+  public refreshAll() {
+    this.loading = true;
+    this.lastRefreshed = moment().format('HH:mm:ss');
 
-  public onPanelScroll() {
-    if (!this.carouselContainer || !this.carouselContainer.nativeElement) {
-      return;
+    const today = moment().format('YYYY-MM-DD');
+    const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+    const monthStart = moment().startOf('month').format('YYYY-MM-DD');
+    const sixMonthsAgo = moment().subtract(6, 'month').format('YYYY-MM-DD');
+
+    // 1. Today's patient count
+    if (this.showClinicalAnalytics) {
+      this.loadTodayPatients(today, yesterday);
     }
-    const container = this.carouselContainer.nativeElement;
-    const index = Math.round(container.scrollLeft / Math.max(container.clientWidth, 1));
-    this.activePanelIndex = index;
-  }
 
-  private scrollToPanel(index: number) {
-    if (!this.carouselContainer || !this.carouselContainer.nativeElement) {
-      return;
+    // 2. Today's revenue (department revenue)
+    if (this.showRevenueAnalytics) {
+      this.loadTodayRevenue(today);
     }
-    const container = this.carouselContainer.nativeElement;
-    const targetLeft = container.clientWidth * index;
-    try {
-      if (container.scrollTo) {
-        container.scrollTo(targetLeft, 0);
-      } else {
-        container.scrollLeft = targetLeft;
-      }
+
+    // 3. Bed/ward summary
+    if (this.showClinicalAnalytics) {
+      this.loadWardSummary(monthStart, today);
     }
-    catch (ex) {
-      container.scrollLeft = targetLeft;
+
+    // 4. Emergency summary
+    if (this.showClinicalAnalytics) {
+      this.loadEmergencySummary(today);
     }
+
+    // 5. Patient Trends (monthly - last 6 months)
+    if (this.showClinicalAnalytics) {
+      this.loadPatientTrends(sixMonthsAgo, today);
+    }
+
+    // 6. Patient Distribution (department appointments today)
+    if (this.showClinicalAnalytics) {
+      this.loadPatientDistribution(today);
+    }
+
+    // 7. Department Revenue chart (today)
+    if (this.showRevenueAnalytics && this.showDepartmentRevenueChart) {
+      this.loadDepartmentRevenue(today);
+    }
+
+    // 8. Top Performing Doctors (this month)
+    if (this.showRevenueAnalytics && this.showTopDoctors) {
+      this.loadTopDoctors(monthStart, today);
+    }
+
+    // 9. Trending Lab Tests
+    if (this.showClinicalAnalytics) {
+      this.loadLabTrending(monthStart, today);
+    }
+
+    // 10. Department Appointments (this month)
+    if (this.showClinicalAnalytics) {
+      this.loadDeptAppointments(monthStart, today);
+    }
+
+    // Mark loading done after a short delay
+    setTimeout(() => { this.loading = false; }, 3000);
   }
 
-  private buildPanels(): DashboardPanel[] {
-    const today = moment();
-    const previousMonthStart = moment().subtract(1, 'month').startOf('month');
-    const previousMonthEnd = moment().subtract(1, 'month').endOf('month');
-    return [
-      this.createPanel('month', '1 Month', 'Rolling last month', today.clone().subtract(1, 'month').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')),
-      this.createPanel('previous-month', 'Previous Month', previousMonthStart.format('MMM YYYY'), previousMonthStart.format('YYYY-MM-DD'), previousMonthEnd.format('YYYY-MM-DD')),
-      this.createPanel('year', 'Year', 'Rolling last 12 months', today.clone().subtract(12, 'month').format('YYYY-MM-DD'), today.format('YYYY-MM-DD'))
-    ];
-  }
+  // ========== DATA LOADERS ==========
 
-  private createPanel(key: string, title: string, subtitle: string, fromDate: string, toDate: string): DashboardPanel {
-    return {
-      key: key,
-      title: title,
-      subtitle: subtitle,
-      fromDate: fromDate,
-      toDate: toDate,
-      loading: true,
-      patientCards: [],
-      doctorCards: [],
-      readmissionCards: [],
-      patientCountByDay: [],
-      treatmentCostRows: [],
-      departmentAppointments: [],
-      hospitalManagement: [],
-      wardSummary: [],
-      totalAdmittedPatients: 0,
-      totalDischargedPatients: 0,
-      emergencySummary: {
-        TotalRegisteredPatients: 0,
-        MildPatients: 0,
-        ModeratePatients: 0,
-        CriticalPatients: 0,
-        DeathPatients: 0,
-        TotalTriagedPatients: 0,
-        LAMAPatients: 0,
-        AdmittedPatients: 0,
-        TransferredPatients: 0,
-        DischargedPatients: 0,
-        TotalFinalizedPatients: 0
-      },
-      labMembership: [],
-      labTrending: [],
-      billingMembership: [],
-      billingRank: []
-    };
-  }
-
-  public loadAnalyticsForRange(panel: DashboardPanel) {
-    panel.loading = true;
-    this.loadPatientCards(panel);
-    this.loadPatientDailyCount(panel);
-    this.loadTreatmentCost(panel);
-    this.loadDepartmentAppointments(panel);
-    this.loadHospitalManagement(panel);
-    this.loadBedAndAdt(panel);
-    this.loadEmergencySummary(panel);
-    this.loadLabMembership(panel);
-    this.loadLabTrending(panel);
-    this.loadBillingMembership(panel);
-    this.loadBillingRank(panel);
-  }
-
-  private loadPatientCards(panel: DashboardPanel) {
-    this.dlService.Read(`/PatientDashboard/GetPatientDashboardCardSummaryCalculation?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK' && res.Results) {
-        panel.patientCards = res.Results.Patients || [];
-        panel.doctorCards = res.Results.Doctors || [];
-        panel.readmissionCards = res.Results.ReAdmission || [];
-      }
-    });
-  }
-
-  private loadPatientDailyCount(panel: DashboardPanel) {
-    this.dlService.Read(`/PatientDashboard/GetPatientCountByDay?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.patientCountByDay = res.Results || [];
-        this.safeRender(() => this.renderPatientDailyChart(panel));
-      }
-    });
-  }
-
-  private loadTreatmentCost(panel: DashboardPanel) {
-    this.dlService.Read(`/PatientDashboard/GetAverageTreatmentCostbyAgeGroup?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.treatmentCostRows = res.Results || [];
-        this.safeRender(() => this.renderTreatmentCostChart(panel));
-      }
-    });
-  }
-
-  private loadDepartmentAppointments(panel: DashboardPanel) {
-    this.dlService.Read(`/PatientDashboard/GetDepartmentWiseAppointment?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.departmentAppointments = res.Results || [];
-        this.safeRender(() => this.renderDepartmentWiseChart(panel));
-      }
-    });
-  }
-
-  private loadHospitalManagement(panel: DashboardPanel) {
-    this.dlService.Read(`/PatientDashboard/GetHospitalManagement?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.hospitalManagement = res.Results || [];
-        const max = Math.max.apply(null, panel.hospitalManagement.map(a => a.Count).concat([0]));
-        panel.hospitalManagement.forEach(item => {
-          item.Percentage = max > 0 ? Math.round((item.Count / max) * 100) : 0;
-        });
-      }
-    });
-  }
-
-  private loadBedAndAdt(panel: DashboardPanel) {
-    const totalDischargedPatients$ = this.dlService.Read(`/Reporting/DischargedPatient?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).map(r => r);
-    const totalAdmittedPatients$ = this.dlService.Read(`/Reporting/TotalAdmittedPatient?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).map(r => r);
-    const inpatientCensusWardWise$ = this.dlService.Read(`/Reporting/AllWardCountDetail?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).map(r => r);
-
-    forkJoin([totalDischargedPatients$, totalAdmittedPatients$, inpatientCensusWardWise$]).subscribe((res: any[]) => {
-      if (res && res.length > 2) {
-        panel.totalDischargedPatients = res[0] && res[0].Results ? res[0].Results.length : 0;
-        panel.totalAdmittedPatients = res[1] && res[1].Results ? res[1].Results.length : 0;
-        panel.wardSummary = res[2] && res[2].Results ? res[2].Results : [];
-      }
-    });
-  }
-
-  private loadEmergencySummary(panel: DashboardPanel) {
-    this.dlService.Read(`/Reporting/ERDashboard?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`)
-      .map(res => res)
+  private loadTodayPatients(today: string, yesterday: string) {
+    // Today
+    this.dlService.Read(`/PatientDashboard/GetPatientCountByDay?FromDate=${today}&ToDate=${today}`)
       .subscribe((res: any) => {
-        if (res && res.Status === 'OK' && res.Results && res.Results.JsonData) {
-          const dashboardStats = JSON.parse(res.Results.JsonData);
-          if (dashboardStats && dashboardStats.LabelData && dashboardStats.LabelData.length > 0) {
-            panel.emergencySummary = dashboardStats.LabelData[0];
+        if (res && res.Status === 'OK' && res.Results) {
+          this.todayPatientCount = (res.Results as any[]).reduce((sum, r) => sum + (r.PatientCount || 0), 0);
+        }
+      });
+    // Yesterday (for trend)
+    this.dlService.Read(`/PatientDashboard/GetPatientCountByDay?FromDate=${yesterday}&ToDate=${yesterday}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          this.yesterdayPatientCount = (res.Results as any[]).reduce((sum, r) => sum + (r.PatientCount || 0), 0);
+          if (this.yesterdayPatientCount > 0) {
+            this.patientTrend = Math.round(((this.todayPatientCount - this.yesterdayPatientCount) / this.yesterdayPatientCount) * 100);
+          } else {
+            this.patientTrend = this.todayPatientCount > 0 ? 100 : 0;
           }
         }
       });
   }
 
-  private loadLabMembership(panel: DashboardPanel) {
-    this.dlService.Read(`/Reporting/LabDashboardMembershipWiseTestCount?FromDate=${panel.fromDate}&Todate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.labMembership = res.Results || [];
-        this.safeRender(() => this.renderLabMembershipChart(panel));
-      }
-    });
+  private loadTodayRevenue(today: string) {
+    this.dlService.Read(`/BillingReports/DepartmentSummaryReport?FromDate=${today}&ToDate=${today}&billingType=outpatient`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results && res.Results.DepartmentSummary) {
+          const rows = res.Results.DepartmentSummary as any[];
+          if (rows && rows.length) {
+            this.todayRevenue = rows.reduce((sum, r) => {
+              // Try common column names for total amount
+              return sum + (r.NetTotal || r.TotalAmount || r.SubTotal || r.Amount || 0);
+            }, 0);
+          }
+        }
+      }, () => {
+        // Fallback: try DepartmentRevenue
+        this.dlService.Read(`/BillingReports/DepartmentRevenueReport?FromDate=${today}&ToDate=${today}`)
+          .subscribe((res2: any) => {
+            if (res2 && res2.Status === 'OK' && res2.Results && res2.Results.JsonData) {
+              try {
+                const parsed = JSON.parse(res2.Results.JsonData);
+                if (parsed && parsed.length) {
+                  this.todayRevenue = parsed.reduce((s, r) => s + (r.Total || r.Amount || 0), 0);
+                }
+              } catch (e) { }
+            }
+          });
+      });
   }
 
-  private loadLabTrending(panel: DashboardPanel) {
-    this.dlService.Read(`/Reporting/LabDashboardTrendingTestCount?FromDate=${panel.fromDate}&Todate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.labTrending = res.Results || [];
-        this.safeRender(() => this.renderLabTrendingChart(panel));
-      }
-    });
+  private loadWardSummary(fromDate: string, toDate: string) {
+    this.dlService.Read(`/Reporting/AllWardCountDetail?FromDate=${fromDate}&ToDate=${toDate}`)
+      .subscribe((res: any) => {
+        if (res && res.Results) {
+          this.wardSummary = res.Results || [];
+          this.occupiedBeds = this.wardSummary.reduce((sum, w) => sum + (w.InBed || 0), 0);
+        }
+      });
   }
 
-  private loadBillingMembership(panel: DashboardPanel) {
-    this.dlService.Read(`/Reporting/BillingDashboardMembershipWisePatientInvoiceCount?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.billingMembership = res.Results || [];
-        this.safeRender(() => this.renderBillingMembershipChart(panel));
-      }
-    });
+  private loadEmergencySummary(today: string) {
+    this.dlService.Read(`/Reporting/ERDashboard?FromDate=${today}&ToDate=${today}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results && res.Results.JsonData) {
+          try {
+            const parsed = JSON.parse(res.Results.JsonData);
+            if (parsed && parsed.LabelData && parsed.LabelData.length > 0) {
+              this.emergencySummary = parsed.LabelData[0];
+              this.erToday = this.emergencySummary.TotalRegisteredPatients || 0;
+            }
+          } catch (e) { }
+        }
+      });
   }
 
-  private loadBillingRank(panel: DashboardPanel) {
-    this.dlService.Read(`/Reporting/BillingDashboardRankWisePatientInvoiceCount?FromDate=${panel.fromDate}&ToDate=${panel.toDate}`).subscribe((res: any) => {
-      if (res && res.Status === 'OK') {
-        panel.billingRank = res.Results || [];
-        this.safeRender(() => {
-          this.renderBillingRankChart(panel);
-          panel.loading = false;
-        });
+  private loadPatientTrends(fromDate: string, toDate: string) {
+    this.dlService.Read(`/PatientDashboard/GetPatientCountByDay?FromDate=${fromDate}&ToDate=${toDate}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          this.safeRender(() => this.renderPatientTrendChart(res.Results || []));
+        }
+      });
+  }
+
+  private loadPatientDistribution(today: string) {
+    this.dlService.Read(`/PatientDashboard/GetDepartmentWiseAppointment?FromDate=${today}&ToDate=${today}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          this.safeRender(() => this.renderPatientDistributionChart(res.Results || []));
+        }
+      }, () => {
+        // Fallback to monthly
+        const monthStart = moment().startOf('month').format('YYYY-MM-DD');
+        this.dlService.Read(`/PatientDashboard/GetDepartmentWiseAppointment?FromDate=${monthStart}&ToDate=${today}`)
+          .subscribe((res2: any) => {
+            if (res2 && res2.Status === 'OK' && res2.Results) {
+              this.safeRender(() => this.renderPatientDistributionChart(res2.Results || []));
+            }
+          });
+      });
+  }
+
+  private loadDepartmentRevenue(today: string) {
+    this.dlService.Read(`/BillingReports/DepartmentSummaryReport?FromDate=${today}&ToDate=${today}&billingType=outpatient`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results && res.Results.DepartmentSummary) {
+          this.safeRender(() => this.renderDeptRevenueChart(res.Results.DepartmentSummary || []));
+        }
+      });
+  }
+
+  private loadTopDoctors(fromDate: string, toDate: string) {
+    this.dlService.Read(`/BillingReports/DoctorRevenue?FromDate=${fromDate}&ToDate=${toDate}&PerformerName=`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          const rows = res.Results as any[];
+          // Aggregate by doctor name
+          const doctorMap: { [key: string]: any } = {};
+          rows.forEach(r => {
+            const name = r.Doctor || r.DoctorName || r.PerformerName || 'Unknown';
+            if (!doctorMap[name]) {
+              doctorMap[name] = { DoctorName: name, DepartmentName: r.Department || r.DepartmentName || '', TotalRevenue: 0, PatientCount: 0 };
+            }
+            // Sum OPD + all columns that look like revenue
+            const rowTotal = (r.OPD || 0) + (r.USG || 0) + (r.CT || 0) + (r.ENT || 0) + (r.DENTAL || 0) + (r.OT || 0) + (r.GSURG || 0) + (r.GYNSURG || 0) + (r.ORTHOPROCEDURES || 0);
+            const patientCount = (r.OPDCOUNT || 0) + (r.USGCOUNT || 0) + (r.CTCOUNT || 0) + (r.ENTCOUNT || 0) + (r.DENTALCOUNT || 0) + (r.OTCOUNT || 0) + (r.GSURGCOUNT || 0) + (r.GYNSURGCOUNT || 0) + (r.ORTHOPROCEDURESCOUNT || 0);
+            doctorMap[name].TotalRevenue += rowTotal;
+            doctorMap[name].PatientCount += patientCount;
+          });
+
+          this.topDoctors = Object.values(doctorMap)
+            .filter(d => d.TotalRevenue > 0)
+            .sort((a, b) => b.TotalRevenue - a.TotalRevenue)
+            .slice(0, 8);
+        }
+      });
+  }
+
+  private loadLabTrending(fromDate: string, toDate: string) {
+    this.dlService.Read(`/Reporting/LabDashboardTrendingTestCount?FromDate=${fromDate}&Todate=${toDate}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          this.safeRender(() => this.renderLabTrendChart(res.Results || []));
+        }
+      });
+  }
+
+  private loadDeptAppointments(fromDate: string, toDate: string) {
+    this.dlService.Read(`/PatientDashboard/GetDepartmentWiseAppointment?FromDate=${fromDate}&ToDate=${toDate}`)
+      .subscribe((res: any) => {
+        if (res && res.Status === 'OK' && res.Results) {
+          this.safeRender(() => this.renderDeptAppointmentChart(res.Results || []));
+        }
+      });
+  }
+
+  // ========== CHART RENDERERS ==========
+
+  private renderPatientTrendChart(data: any[]) {
+    // Aggregate by month
+    const monthMap: { [key: string]: { inpatient: number; outpatient: number } } = {};
+    data.forEach(d => {
+      const label = d.Label || '';
+      // Try to parse the date and get YYYY-MM
+      let monthKey = '';
+      const parsed = moment(label, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MMM DD', moment.ISO_8601], true);
+      if (parsed.isValid()) {
+        monthKey = parsed.format('MMM YY');
       } else {
-        panel.loading = false;
+        monthKey = label.substring(0, 7);
       }
-    }, () => panel.loading = false);
-  }
 
-  public sumPatientCount(panel: DashboardPanel): number {
-    return panel.patientCountByDay.reduce((sum, item) => sum + (item.PatientCount || 0), 0);
-  }
+      if (!monthMap[monthKey]) {
+        monthMap[monthKey] = { inpatient: 0, outpatient: 0 };
+      }
+      const vt = (d.VisitType || '').toLowerCase();
+      if (vt === 'inpatient') {
+        monthMap[monthKey].inpatient += d.PatientCount || 0;
+      } else {
+        monthMap[monthKey].outpatient += d.PatientCount || 0;
+      }
+    });
 
-  public totalAppointments(panel: DashboardPanel): number {
-    return panel.departmentAppointments.reduce((sum, item) => sum + (item.AppointmentCount || 0), 0);
-  }
+    const months = Object.keys(monthMap);
+    if (this.patientTrendChart) { this.patientTrendChart.destroy(); }
+    const ctx = document.getElementById('patientTrendChart') as any;
+    if (!ctx) return;
 
-  public totalDoctors(panel: DashboardPanel): number {
-    return panel.doctorCards.reduce((sum, item) => sum + (item.Total || 0), 0);
-  }
-
-  public totalReadmissions(panel: DashboardPanel): number {
-    return panel.readmissionCards.reduce((sum, item) => sum + (item.Total || 0), 0);
-  }
-
-  public totalInBed(panel: DashboardPanel): number {
-    return panel.wardSummary.reduce((sum, item) => sum + (item.InBed || 0), 0);
-  }
-
-  public totalLabMembership(panel: DashboardPanel): number {
-    return panel.labMembership.reduce((sum, item) => sum + (item.TotalCount || 0), 0);
-  }
-
-  public totalBillingMembership(panel: DashboardPanel): number {
-    return panel.billingMembership.reduce((sum, item) => sum + (item.Total || 0), 0);
-  }
-
-  private renderPatientDailyChart(panel: DashboardPanel) {
-    const inpatient = panel.patientCountByDay.filter(a => (a.VisitType || '').toLowerCase() === 'inpatient');
-    const outpatient = panel.patientCountByDay.filter(a => (a.VisitType || '').toLowerCase() === 'outpatient');
-    this.destroySingleChart(panel.key, 'patientDaily');
-    this.chartRefs[panel.key].patientDaily = new Chart(`patientDailyChart-${panel.key}`, {
-      type: 'bar',
+    this.patientTrendChart = new Chart(ctx, {
+      type: 'line',
       data: {
-        labels: this.unique(inpatient.concat(outpatient).map(a => a.Label)),
+        labels: months,
         datasets: [
-          { label: 'In Patient', data: inpatient.map(a => a.PatientCount), backgroundColor: '#008FFB' },
-          { label: 'Out Patient', data: outpatient.map(a => a.PatientCount), backgroundColor: '#00E396' }
+          {
+            label: 'Outpatient',
+            data: months.map(m => monthMap[m].outpatient),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6'
+          },
+          {
+            label: 'Inpatient',
+            data: months.map(m => monthMap[m].inpatient),
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.08)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#22c55e'
+          }
         ]
       },
-      options: this.commonChartOptions(true)
+      options: this.lineChartOptions()
     });
   }
 
-  private renderTreatmentCostChart(panel: DashboardPanel) {
-    const maleRows = panel.treatmentCostRows.filter(a => a.Gender === 'Male');
-    const femaleRows = panel.treatmentCostRows.filter(a => a.Gender === 'Female');
-    const otherRows = panel.treatmentCostRows.filter(a => a.Gender === 'Others');
-    this.destroySingleChart(panel.key, 'treatmentCost');
-    this.chartRefs[panel.key].treatmentCost = new Chart(`treatmentCostChart-${panel.key}`, {
-      type: 'horizontalBar',
-      data: {
-        labels: maleRows.map(a => a.AgeRange),
-        datasets: [
-          { label: 'Male', data: maleRows.map(a => a.Total), backgroundColor: '#FF4560' },
-          { label: 'Female', data: femaleRows.map(a => a.Total), backgroundColor: '#00E396' },
-          { label: 'Others', data: otherRows.map(a => a.Total), backgroundColor: '#775DD0' }
-        ]
-      },
-      options: this.commonChartOptions(true)
-    });
-  }
+  private renderPatientDistributionChart(data: any[]) {
+    const filtered = (data || []).filter(d => d.AppointmentCount > 0).slice(0, 10);
+    if (this.patientDistributionChart) { this.patientDistributionChart.destroy(); }
+    const ctx = document.getElementById('patientDistributionChart') as any;
+    if (!ctx) return;
 
-  private renderDepartmentWiseChart(panel: DashboardPanel) {
-    this.destroySingleChart(panel.key, 'departmentWise');
-    this.chartRefs[panel.key].departmentWise = new Chart(`departmentChart-${panel.key}`, {
+    this.patientDistributionChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: panel.departmentAppointments.map(a => a.DepartmentName),
+        labels: filtered.map(d => d.DepartmentName),
         datasets: [{
-          data: panel.departmentAppointments.map(a => a.AppointmentCount),
-          backgroundColor: this.getColorSet(panel.departmentAppointments.length)
+          data: filtered.map(d => d.AppointmentCount),
+          backgroundColor: this.getColors(filtered.length),
+          borderWidth: 2,
+          borderColor: '#fff'
         }]
       },
-      options: this.commonChartOptions(false, 'right')
+      options: {
+        maintainAspectRatio: false,
+        legend: {
+          display: true,
+          position: 'right',
+          labels: { usePointStyle: true, boxWidth: 8, fontSize: 11 }
+        },
+        cutoutPercentage: 65
+      }
     });
   }
 
-  private renderLabTrendingChart(panel: DashboardPanel) {
-    this.destroySingleChart(panel.key, 'labTrending');
-    this.chartRefs[panel.key].labTrending = new Chart(`labTrendingChart-${panel.key}`, {
+  private renderDeptRevenueChart(data: any[]) {
+    // Get top 8 departments by revenue
+    const sorted = [...data]
+      .map(d => ({
+        name: d.ServiceDepartmentName || d.DepartmentName || d.Department || 'Other',
+        total: d.NetTotal || d.TotalAmount || d.SubTotal || d.Amount || 0
+      }))
+      .filter(d => d.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+
+    if (this.deptRevenueChart) { this.deptRevenueChart.destroy(); }
+    const ctx = document.getElementById('deptRevenueChart') as any;
+    if (!ctx) return;
+
+    this.deptRevenueChart = new Chart(ctx, {
+      type: 'horizontalBar',
+      data: {
+        labels: sorted.map(d => d.name),
+        datasets: [{
+          label: 'Revenue',
+          data: sorted.map(d => d.total),
+          backgroundColor: this.getColors(sorted.length),
+          borderRadius: 6
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        legend: { display: false },
+        scales: {
+          xAxes: [{
+            gridLines: { display: false },
+            ticks: {
+              beginAtZero: true,
+              callback: (value: number) => {
+                if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                return value;
+              }
+            }
+          }],
+          yAxes: [{
+            gridLines: { display: false },
+            barThickness: 22
+          }]
+        }
+      }
+    });
+  }
+
+  private renderDeptAppointmentChart(data: any[]) {
+    const filtered = (data || []).filter(d => d.AppointmentCount > 0).slice(0, 10);
+    if (this.deptAppointmentChart) { this.deptAppointmentChart.destroy(); }
+    const ctx = document.getElementById('deptAppointmentChart') as any;
+    if (!ctx) return;
+
+    this.deptAppointmentChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: panel.labTrending.map(a => a.LabTestName),
+        labels: filtered.map(d => d.DepartmentName),
         datasets: [{
-          label: 'Lab Tests',
-          data: panel.labTrending.map(a => a.Counts),
-          backgroundColor: '#18E3D8'
+          label: 'Appointments',
+          data: filtered.map(d => d.AppointmentCount),
+          backgroundColor: '#3b82f6',
+          borderRadius: 6
         }]
       },
-      options: this.commonChartOptions(false)
+      options: {
+        maintainAspectRatio: false,
+        legend: { display: false },
+        scales: {
+          xAxes: [{ gridLines: { display: false } }],
+          yAxes: [{ gridLines: { display: false }, ticks: { beginAtZero: true } }]
+        }
+      }
     });
   }
 
-  private renderLabMembershipChart(panel: DashboardPanel) {
-    this.destroySingleChart(panel.key, 'labMembership');
-    this.chartRefs[panel.key].labMembership = new Chart(`labMembershipChart-${panel.key}`, {
-      type: 'pie',
+  private renderLabTrendChart(data: any[]) {
+    const filtered = (data || []).filter(d => d.Counts > 0).slice(0, 10);
+    if (this.labTrendChart) { this.labTrendChart.destroy(); }
+    const ctx = document.getElementById('labTrendChart') as any;
+    if (!ctx) return;
+
+    this.labTrendChart = new Chart(ctx, {
+      type: 'horizontalBar',
       data: {
-        labels: panel.labMembership.map(a => a.MembershipTypeName),
+        labels: filtered.map(d => d.LabTestName),
         datasets: [{
-          data: panel.labMembership.map(a => a.TotalCount || 0),
-          backgroundColor: this.getColorSet(panel.labMembership.length)
+          label: 'Tests',
+          data: filtered.map(d => d.Counts),
+          backgroundColor: '#14b8a6',
+          borderRadius: 6
         }]
       },
-      options: this.commonChartOptions(false, 'right')
+      options: {
+        maintainAspectRatio: false,
+        legend: { display: false },
+        scales: {
+          xAxes: [{ gridLines: { display: false }, ticks: { beginAtZero: true } }],
+          yAxes: [{ gridLines: { display: false }, barThickness: 20 }]
+        }
+      }
     });
   }
 
-  private renderBillingMembershipChart(panel: DashboardPanel) {
-    this.destroySingleChart(panel.key, 'billingMembership');
-    this.chartRefs[panel.key].billingMembership = new Chart(`billingMembershipChart-${panel.key}`, {
-      type: 'pie',
-      data: {
-        labels: panel.billingMembership.map(a => a.MembershipTypeName),
-        datasets: [{
-          data: panel.billingMembership.map(a => a.Total || 0),
-          backgroundColor: this.getColorSet(panel.billingMembership.length)
-        }]
-      },
-      options: this.commonChartOptions(false, 'right')
-    });
-  }
+  // ========== HELPERS ==========
 
-  private renderBillingRankChart(panel: DashboardPanel) {
-    this.destroySingleChart(panel.key, 'billingRank');
-    this.chartRefs[panel.key].billingRank = new Chart(`billingRankChart-${panel.key}`, {
-      type: 'bar',
-      data: {
-        labels: panel.billingRank.map(a => a.Rank),
-        datasets: [{
-          label: 'Invoices',
-          data: panel.billingRank.map(a => a.Total || 0),
-          backgroundColor: '#FEB019'
-        }]
-      },
-      options: this.commonChartOptions(false)
-    });
-  }
-
-  private commonChartOptions(showLegend: boolean, legendPosition: string = 'bottom') {
+  private lineChartOptions() {
     return {
       maintainAspectRatio: false,
       legend: {
-        display: showLegend,
-        position: legendPosition,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 8
-        }
+        display: true,
+        position: 'bottom',
+        labels: { usePointStyle: true, boxWidth: 8, fontSize: 12 }
       },
       scales: {
         xAxes: [{ gridLines: { display: false } }],
-        yAxes: [{ gridLines: { display: false }, ticks: { beginAtZero: true } }]
+        yAxes: [{
+          gridLines: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { beginAtZero: true }
+        }]
       }
     };
+  }
+
+  private getColors(count: number): string[] {
+    const result: string[] = [];
+    for (let i = 0; i < count; i++) {
+      result.push(this.colors[i % this.colors.length]);
+    }
+    return result;
   }
 
   private safeRender(callback: Function) {
@@ -529,41 +621,15 @@ export class DashboardHomeComponent implements AfterViewInit, OnDestroy {
       try {
         this.changeDetector.detectChanges();
         callback();
+      } catch (ex) {
+        console.warn('Dashboard chart render:', ex);
       }
-      catch (ex) {
-        console.error('Homepage analytics chart render failed.', ex);
-      }
-    }, 0);
+    }, 100);
   }
 
-  private unique(values: string[]): string[] {
-    return values.filter((item, index) => values.indexOf(item) === index);
-  }
-
-  private getColorSet(count: number): string[] {
-    const colors: string[] = [];
-    for (let i = 0; i < count; i++) {
-      colors.push(this.colorPalette[i % this.colorPalette.length]);
-    }
-    return colors;
-  }
-
-  private destroyCharts(key: string) {
-    const current = this.chartRefs[key];
-    if (!current) {
-      return;
-    }
-    Object.keys(current).forEach(chartKey => this.destroySingleChart(key, chartKey));
-  }
-
-  private destroySingleChart(key: string, chartKey: string) {
-    if (!this.chartRefs[key]) {
-      this.chartRefs[key] = {};
-    }
-    const chart = this.chartRefs[key][chartKey];
-    if (chart) {
-      chart.destroy();
-      this.chartRefs[key][chartKey] = null;
-    }
+  private destroyAllCharts() {
+    [this.patientTrendChart, this.patientDistributionChart, this.deptRevenueChart, this.deptAppointmentChart, this.labTrendChart].forEach(c => {
+      if (c) { try { c.destroy(); } catch (e) { } }
+    });
   }
 }

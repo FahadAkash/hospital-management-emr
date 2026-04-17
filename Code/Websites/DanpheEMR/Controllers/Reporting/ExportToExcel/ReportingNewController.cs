@@ -9,6 +9,7 @@ using DanpheEMR.Core.Configuration;
 using DanpheEMR.Utilities;
 using System.Data.SqlClient;
 using Newtonsoft.Json;
+using DanpheEMR.Controllers;
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace DanpheEMR.Controllers.ReportingNew
@@ -22,6 +23,7 @@ namespace DanpheEMR.Controllers.ReportingNew
 
         }
         //NBB- try this for test
+        [DanphePermissionFilter("Reports/BillingMain/DoctorRevenue")]
         public FileContentResult ExportToExcelDoctorRevenue(DateTime FromDate, DateTime ToDate, string PerformerName)
         {
             try

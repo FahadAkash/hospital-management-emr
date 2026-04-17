@@ -1,239 +1,244 @@
-<div class="home-analytics-page">
-  <div class="home-analytics-header">
-    <div>
-      <h2>Homepage Analytics</h2>
-      <p>Compare patient, bed, emergency, lab, billing, department and doctor information from one place.</p>
+<div class="dashboard-page">
+  <!-- Greeting Header -->
+  <div class="dashboard-greeting">
+    <div class="greeting-text">
+      <h2>Dashboard Overview</h2>
+      <p>Real-time hospital analytics &mdash; powered by live data</p>
     </div>
-    <div class="range-switcher">
-      <button *ngFor="let panel of panels; let i = index"
-              type="button"
-              class="range-button"
-              [class.active]="activePanelIndex === i"
-              (click)="setActivePanel(i)">
-        {{panel.title}}
+    <div class="greeting-actions">
+      <span class="date-badge">
+        <i class="fa fa-calendar"></i> {{currentDate}}
+      </span>
+      <button class="refresh-btn" [class.spinning]="loading" (click)="refreshAll()">
+        <i class="fa fa-refresh"></i> Refresh
       </button>
     </div>
   </div>
 
-  <div #carouselContainer class="analytics-carousel" (scroll)="onPanelScroll()">
-    <section *ngFor="let panel of panels; let i = index" class="analytics-panel">
-      <div class="panel-header">
-        <div>
-          <h3>{{panel.title}}</h3>
-          <p>{{panel.fromDate}} to {{panel.toDate}}</p>
-        </div>
-        <div class="panel-badge">{{panel.subtitle}}</div>
-      </div>
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a class="qa-btn" routerLink="/Patient/RegisterPatient/BasicInfo">
+      <span class="qa-icon blue"><i class="fa fa-user-plus"></i></span>
+      New Patient
+    </a>
+    <a class="qa-btn" routerLink="/Appointment/Visit">
+      <span class="qa-icon green"><i class="fa fa-calendar-check-o"></i></span>
+      Book Appointment
+    </a>
+    <a class="qa-btn" routerLink="/Billing/SearchPatient">
+      <span class="qa-icon purple"><i class="fa fa-credit-card"></i></span>
+      Billing Counter
+    </a>
+    <a class="qa-btn" routerLink="/Lab/Dashboard">
+      <span class="qa-icon orange"><i class="fa fa-flask"></i></span>
+      Lab Dashboard
+    </a>
+    <a class="qa-btn" routerLink="/Pharmacy/Sale/New">
+      <span class="qa-icon teal"><i class="fa fa-medkit"></i></span>
+      Pharmacy Sale
+    </a>
+    <a class="qa-btn" routerLink="/ADTMain/AdmissionSearchPatient">
+      <span class="qa-icon red"><i class="fa fa-bed"></i></span>
+      Admit Patient
+    </a>
+  </div>
 
-      <div class="summary-grid">
-        <div class="summary-card primary">
-          <span class="summary-label">Patients</span>
-          <h3>{{sumPatientCount(panel)}}</h3>
-          <p>Total visits in selected range</p>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Doctors</span>
-          <h3>{{totalDoctors(panel)}}</h3>
-          <p>Doctor summary rows aggregated</p>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Appointments</span>
-          <h3>{{totalAppointments(panel)}}</h3>
-          <p>Department-wise appointments</p>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Readmissions</span>
-          <h3>{{totalReadmissions(panel)}}</h3>
-          <p>Readmission summary</p>
-        </div>
-        <div class="summary-card warning">
-          <span class="summary-label">In Bed</span>
-          <h3>{{totalInBed(panel)}}</h3>
-          <p>Current inpatient census</p>
-        </div>
-        <div class="summary-card danger">
-          <span class="summary-label">Emergency Registered</span>
-          <h3>{{panel.emergencySummary.TotalRegisteredPatients}}</h3>
-          <p>ER registrations in range</p>
-        </div>
-        <div class="summary-card success">
-          <span class="summary-label">Lab Tests</span>
-          <h3>{{totalLabMembership(panel)}}</h3>
-          <p>Membership-wise lab totals</p>
-        </div>
-        <div class="summary-card info">
-          <span class="summary-label">Billing Invoices</span>
-          <h3>{{totalBillingMembership(panel)}}</h3>
-          <p>Membership-wise invoice totals</p>
+  <!-- KPI Summary Row -->
+  <div class="kpi-row">
+    <div class="kpi-card" *ngIf="showClinicalAnalytics">
+      <div class="kpi-icon blue"><i class="fa fa-users"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Today's Patients</div>
+        <div class="kpi-value">{{todayPatientCount}}</div>
+        <div class="kpi-change" [ngClass]="patientTrend >= 0 ? 'up' : 'down'">
+          <i [ngClass]="patientTrend >= 0 ? 'fa fa-arrow-up' : 'fa fa-arrow-down'"></i>
+          {{patientTrend >= 0 ? '+' : ''}}{{patientTrend}}% vs yesterday
         </div>
       </div>
-
-      <div class="analytics-grid">
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Patient Count by Day</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'patientDailyChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Average Treatment Cost by Age Group</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'treatmentCostChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Department Wise Appointment Count</h4>
-            <span>Total {{totalAppointments(panel)}}</span>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'departmentChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Emergency Health Information</h4>
-          </div>
-          <div class="mini-stats-grid">
-            <div><strong>{{panel.emergencySummary.TotalTriagedPatients}}</strong><span>Triaged</span></div>
-            <div><strong>{{panel.emergencySummary.MildPatients}}</strong><span>Mild</span></div>
-            <div><strong>{{panel.emergencySummary.ModeratePatients}}</strong><span>Moderate</span></div>
-            <div><strong>{{panel.emergencySummary.CriticalPatients}}</strong><span>Critical</span></div>
-            <div><strong>{{panel.emergencySummary.DeathPatients}}</strong><span>Death Triage</span></div>
-            <div><strong>{{panel.emergencySummary.TotalFinalizedPatients}}</strong><span>Finalized</span></div>
-            <div><strong>{{panel.emergencySummary.AdmittedPatients}}</strong><span>Admitted</span></div>
-            <div><strong>{{panel.emergencySummary.TransferredPatients}}</strong><span>Transferred</span></div>
-            <div><strong>{{panel.emergencySummary.DischargedPatients}}</strong><span>Discharged</span></div>
-            <div><strong>{{panel.emergencySummary.LAMAPatients}}</strong><span>LAMA</span></div>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Trending Lab Tests</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'labTrendingChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Lab Membership Distribution</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'labMembershipChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Billing Membership Distribution</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'billingMembershipChart-' + panel.key"></canvas>
-          </div>
-        </div>
-
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Billing Rank Distribution</h4>
-          </div>
-          <div class="chart-host">
-            <canvas [attr.id]="'billingRankChart-' + panel.key"></canvas>
-          </div>
-        </div>
+    </div>
+    <div class="kpi-card" *ngIf="showRevenueAnalytics">
+      <div class="kpi-icon green"><i class="fa fa-money"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Today's Revenue</div>
+        <div class="kpi-value">{{coreService.currencyUnit}} {{todayRevenue | number:'1.0-0'}}</div>
+        <div class="kpi-change neutral">Billing invoices today</div>
       </div>
-
-      <div class="analytics-grid">
-        <div class="analytics-card">
-          <div class="card-header">
-            <h4>Hospital Management Breakdown</h4>
-          </div>
-          <div class="progress-list">
-            <div class="progress-item" *ngFor="let item of panel.hospitalManagement">
-              <div class="progress-label">
-                <span>{{item.Label}}</span>
-                <span>{{item.Count}}</span>
-              </div>
-              <div class="progress">
-                <div class="progress-bar" [style.width.%]="item.Percentage || 0"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="analytics-card table-card">
-          <div class="card-header">
-            <div>
-              <h4>Bed Information / Inpatient Census</h4>
-              <p>Admitted {{panel.totalAdmittedPatients}} | Discharged {{panel.totalDischargedPatients}}</p>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Ward</th>
-                  <th>In Bed</th>
-                  <th>Admission</th>
-                  <th>Trans In</th>
-                  <th>Trans Out</th>
-                  <th>Discharged</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let ward of panel.wardSummary">
-                  <td>{{ward.Ward}}</td>
-                  <td>{{ward.InBed}}</td>
-                  <td>{{ward.NewAdmission}}</td>
-                  <td>{{ward.TransIn}}</td>
-                  <td>{{ward.TransOut}}</td>
-                  <td>{{ward.Discharged}}</td>
-                  <td>{{ward.Total}}</td>
-                </tr>
-                <tr *ngIf="!panel.wardSummary || panel.wardSummary.length === 0">
-                  <td colspan="7">No ward data available for this range.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="analytics-card table-card">
-          <div class="card-header">
-            <h4>Doctor / Patient Summary</h4>
-          </div>
-          <div class="side-by-side">
-            <div>
-              <h5>Doctors</h5>
-              <div class="summary-list">
-                <div class="summary-list-item" *ngFor="let item of panel.doctorCards">
-                  <span>{{item.Label}}</span>
-                  <strong>{{item.Total || 0}}</strong>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h5>Readmission</h5>
-              <div class="summary-list">
-                <div class="summary-list-item" *ngFor="let item of panel.readmissionCards">
-                  <span>{{item.Label}}</span>
-                  <strong>{{item.Total || 0}}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    </div>
+    <div class="kpi-card" *ngIf="showClinicalAnalytics">
+      <div class="kpi-icon purple"><i class="fa fa-bed"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Beds Occupied</div>
+        <div class="kpi-value">{{occupiedBeds}}</div>
+        <div class="kpi-change neutral">Currently admitted</div>
       </div>
-    </section>
+    </div>
+    <div class="kpi-card" *ngIf="showClinicalAnalytics">
+      <div class="kpi-icon red"><i class="fa fa-ambulance"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">ER Today</div>
+        <div class="kpi-value">{{erToday}}</div>
+        <div class="kpi-change neutral">Emergency registrations</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Patient Trends + Patient Distribution -->
+  <div class="charts-grid" *ngIf="showClinicalAnalytics">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Patient Trends (Monthly)</h4>
+        <span class="badge">Last 6 months</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="patientTrendChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Patient Distribution</h4>
+        <span class="badge">Today</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="patientDistributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Department Revenue + Top Doctors -->
+  <div class="charts-grid" *ngIf="showRevenueAnalytics">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Department Revenue (Today)</h4>
+        <span class="badge">{{coreService.currencyUnit}}</span>
+      </div>
+      <div class="chart-host" *ngIf="showDepartmentRevenueChart">
+        <canvas id="deptRevenueChart"></canvas>
+      </div>
+      <div *ngIf="!showDepartmentRevenueChart" style="text-align:center;padding:60px 0;color:#94a3b8;">
+        Revenue chart not available for your role.
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Top Performing Doctors</h4>
+        <span class="badge">This Month</span>
+      </div>
+      <div *ngIf="!showTopDoctors" style="text-align:center;padding:60px 0;color:#94a3b8;">
+        Top doctor revenue is not available for your role.
+      </div>
+      <div *ngIf="showTopDoctors && topDoctors.length === 0" style="text-align:center;padding:60px 0;color:#94a3b8;">
+        <i class="fa fa-user-md" style="font-size:36px;margin-bottom:10px;display:block;"></i>
+        No doctor revenue data available for this month.
+      </div>
+      <table class="leaderboard-table" *ngIf="showTopDoctors && topDoctors.length > 0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Doctor</th>
+            <th>Patients</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doc of topDoctors; let idx = index">
+            <td>
+              <span class="rank-badge"
+                    [ngClass]="idx === 0 ? 'gold' : (idx === 1 ? 'silver' : (idx === 2 ? 'bronze' : 'default'))">
+                {{idx + 1}}
+              </span>
+            </td>
+            <td>
+              <div class="doctor-name">{{doc.DoctorName}}</div>
+              <div class="doctor-dept">{{doc.DepartmentName || '—'}}</div>
+            </td>
+            <td>{{doc.PatientCount || 0}}</td>
+            <td class="revenue-amount">{{coreService.currencyUnit}} {{doc.TotalRevenue | number:'1.0-0'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Emergency Strip -->
+  <div class="emergency-strip" *ngIf="showClinicalAnalytics && emergencySummary">
+    <div class="er-stat">
+      <strong>{{emergencySummary.TotalRegisteredPatients}}</strong>
+      <span>ER Registered</span>
+    </div>
+    <div class="er-stat">
+      <strong>{{emergencySummary.TotalTriagedPatients}}</strong>
+      <span>Triaged</span>
+    </div>
+    <div class="er-stat critical">
+      <strong>{{emergencySummary.CriticalPatients}}</strong>
+      <span>Critical</span>
+    </div>
+    <div class="er-stat">
+      <strong>{{emergencySummary.AdmittedPatients}}</strong>
+      <span>Admitted</span>
+    </div>
+    <div class="er-stat">
+      <strong>{{emergencySummary.DischargedPatients}}</strong>
+      <span>Discharged</span>
+    </div>
+  </div>
+
+  <!-- Charts Row 3: Department Appointments + Trending Labs -->
+  <div class="charts-grid" *ngIf="showClinicalAnalytics">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Department Wise Appointments</h4>
+        <span class="badge">This Month</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="deptAppointmentChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h4>Trending Lab Tests</h4>
+        <span class="badge">This Month</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="labTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bed/Ward Table -->
+  <div class="table-card" *ngIf="showClinicalAnalytics && wardSummary && wardSummary.length > 0">
+    <h4><i class="fa fa-bed"></i> &nbsp;Ward / Bed Occupancy</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Ward</th>
+          <th>In Bed</th>
+          <th>Admission</th>
+          <th>Transfer In</th>
+          <th>Transfer Out</th>
+          <th>Discharged</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ward of wardSummary">
+          <td><strong>{{ward.Ward}}</strong></td>
+          <td>{{ward.InBed}}</td>
+          <td>{{ward.NewAdmission}}</td>
+          <td>{{ward.TransIn}}</td>
+          <td>{{ward.TransOut}}</td>
+          <td>{{ward.Discharged}}</td>
+          <td><strong>{{ward.Total}}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="dashboard-footer">
+    Pulse Hospital Analytics &bull; Data refreshes automatically &bull; Last updated: {{lastRefreshed}}
   </div>
 </div>

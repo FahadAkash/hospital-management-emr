@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,10 +39,48 @@ public class CommonController : Controller
     }
     internal string ReadPostData()
     {
-        Stream req = Request.Body;
-        req.Seek(0, System.IO.SeekOrigin.Begin);
-        string str = new StreamReader(req).ReadToEnd();
-        return str;
+        // EnableBuffering + Position works reliably for Kestrel; Seek alone can throw if the stream is not seekable.
+        Request.EnableBuffering();
+        Request.Body.Position = 0;
+        using (var reader = new StreamReader(Request.Body, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
+        {
+            return reader.ReadToEndAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+    }
+
+    /// <summary>Session is often empty for SPA API calls; fall back to JWT (same claim as DanpheDataFilter).</summary>
+    protected RbacUser GetCurrentUserFromSessionOrJwt()
+    {
+        RbacUser user = HttpContext.Session.Get<RbacUser>("currentuser");
+        if (user != null)
+        {
+            return user;
+        }
+        try
+        {
+            string tokenFromHeader = HttpContext.Request.Headers["Authorization"];
+            if (string.IsNullOrWhiteSpace(tokenFromHeader))
+            {
+                return null;
+            }
+            var parts = tokenFromHeader.Split(' ');
+            if (parts.Length < 2)
+            {
+                return null;
+            }
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(parts[1]);
+            var userClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ENUM_ClaimTypes.currentUser)?.Value;
+            if (string.IsNullOrWhiteSpace(userClaim))
+            {
+                return null;
+            }
+            return DanpheJSONConvert.DeserializeObject<RbacUser>(userClaim);
+        }
+        catch
+        {
+            return null;
+        }
     }
     internal IFormFileCollection ReadFiles()
     {

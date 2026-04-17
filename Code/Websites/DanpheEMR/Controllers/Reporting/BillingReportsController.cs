@@ -252,6 +252,7 @@ namespace DanpheEMR.Controllers.Reporting
 
 
         #region DepartmentRevenueReport
+        [DanphePermissionFilter("Reports/BillingMain/DepartmentRevenue")]
         public string DepartmentRevenueReport(DateTime FromDate, DateTime ToDate)
         {
             DanpheHTTPResponse<DynamicReport> responseData = new DanpheHTTPResponse<DynamicReport>();
@@ -273,6 +274,7 @@ namespace DanpheEMR.Controllers.Reporting
         #endregion
 
         #region Department Summary Report
+        [DanphePermissionFilter("Reports/BillingMain/DepartmentSummary", "Reports/BillingMain/DepartmentRevenue")]
         public string DepartmentSummaryReport(DateTime FromDate, DateTime ToDate, string billingType)
         {
             DanpheHTTPResponse<object> responseData = new DanpheHTTPResponse<object>();
@@ -331,6 +333,7 @@ namespace DanpheEMR.Controllers.Reporting
         #region Doctor Revenue Report
         //Doctor Revenue Report 
         // GET: /<controller>/
+        [DanphePermissionFilter("Reports/BillingMain/DoctorRevenue")]
         public string DoctorRevenue(DateTime FromDate, DateTime ToDate, string PerformerName)
         {
             DanpheHTTPResponse<DataTable> responseData = new DanpheHTTPResponse<DataTable>();
