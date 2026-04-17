@@ -15,40 +15,23 @@
 
 
   span.ad-sign:after {
-    position: absolute;
     display: inline-block;
     content: '\F107';
-    right: 5px;
-    top: 11px;
     text-align: center;
     background: transparent;
-    z-index: 22;
-    width: 24px;
-    height: 24px;
-    line-height: 20px;
-    font-weight: bold;
-    color: #ddd;
-    font-size: 12px;
     transition: transform .25s linear;
     -webkit-transition: -webkit-transform .25s linear;
     font-family: 'fontAwesome';
-  }
-
-  span.ad-sign.collapsed:after {
-    line-height: 24px !important;
-    content: '\F107';
-    -webkit-transform: rotate(00deg);
-    transform: rotate(00deg);
-  }
-
-  span.ad-sign:after {
+    /* Default state (expanded) points up */
     -webkit-transform: rotate(180deg);
     transform: rotate(180deg);
   }
 
-  /* .page-sidebar-menu-closed .page-sidebar-menu span.ad-sign {
-        display: none;
-    } */
+  a.collapsed span.ad-sign:after {
+    /* Collapsed state points down */
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
 
   ul.page-sidebar-menu-closed span.ad-sign {
     display: none;
@@ -326,12 +309,12 @@
   }
 
   /* cleaner expand/collapse chevron */
+  span.ad-sign {
+    margin-left: auto;
+  }
   span.ad-sign:after {
     color: #9ca3af !important;
-    position: relative !important;
-    top: auto;
-    right: auto;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   /* Make sidebar scroll look modern (where supported) */
@@ -534,12 +517,19 @@
             <ng-container *ngFor="let route of validRoutes; let i = index">
             <li class="menu-section-title" *ngIf="getRouteSectionTitle(route, i)">{{ getRouteSectionTitle(route, i) }}</li>
             <li>
-              <a routerLink="{{route.RouterLink}}" [routerLinkActive]="'left-nav-active'">
+              <a *ngIf="!route.ChildRoutes || route.ChildRoutesDefaultShowCount == 0" routerLink="{{route.RouterLink}}" [routerLinkActive]="'left-nav-active'">
                 <i class="fa nav-fa-icon" [ngClass]="getNavFaIcon(route)"></i>
                 <span class="title">{{getDisplayLabel(route.DisplayName)}}</span>
                 <span class="selected"></span>
-                <span *ngIf="route.ChildRoutes !=null && route.ChildRoutesDefaultShowCount >0"
-                      data-toggle="collapse" attr.data-target="#{{route.DisplayName}}" class="collapsed ad-sign"></span>
+              </a>
+              <a *ngIf="route.ChildRoutes !=null && route.ChildRoutesDefaultShowCount >0"
+                 data-toggle="collapse" attr.data-target="#{{route.DisplayName}}" class="collapsed"
+                 style="cursor: pointer;"
+                 [ngClass]="{'left-nav-active': router.isActive(route.RouterLink, false)}">
+                <i class="fa nav-fa-icon" [ngClass]="getNavFaIcon(route)"></i>
+                <span class="title">{{getDisplayLabel(route.DisplayName)}}</span>
+                <span class="selected"></span>
+                <span class="ad-sign"></span>
               </a>
               <ng-container *ngIf="route.ChildRoutes !=null && route.ChildRoutesDefaultShowCount >0">
                 <ul class="sub-menu collapse" id={{route.DisplayName}}>
