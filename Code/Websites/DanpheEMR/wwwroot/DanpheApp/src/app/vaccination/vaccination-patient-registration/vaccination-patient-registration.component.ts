@@ -316,7 +316,7 @@ export class VaccinationPatientRegistrationComponent {
             lastName = lastName.toLowerCase();
         } else {
             // assign default ethnicity
-            this.model.EthnicGroup = 'Brahmin/Chhetri';
+            this.model.EthnicGroup = 'Other religions';
             return;
         }
 
@@ -333,7 +333,7 @@ export class VaccinationPatientRegistrationComponent {
             this.model.EthnicGroup = tempEthnic;
         } else {
             // assign default ethnicity
-            this.model.EthnicGroup = 'Brahmin/Chhetri';
+            this.model.EthnicGroup = 'Other religions';
         }
 
     }

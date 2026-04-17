@@ -4,6 +4,7 @@ import { ENUM_PrintingType, PrinterSettingsModel } from '../../../settings-new/p
 import { MessageboxService } from '../../../shared/messagebox/messagebox.service';
 import { ENUM_DateFormats, ENUM_MessageBox_Status } from '../../../shared/shared-enums';
 import { Patient_DTO } from '../DTOs/patient.dto';
+import { CoreService } from '../../../core/shared/core.service';
 
 @Component({
   selector: 'medical-claim-form-print',
@@ -34,7 +35,8 @@ export class MedicalClaimFormPrintComponent implements OnInit {
   public insuranceCompanyFaxNumber: string = "061-525116";
   constructor(
     private changeDetector: ChangeDetectorRef,
-    public messageBoxService: MessageboxService
+    public messageBoxService: MessageboxService,
+    public coreService: CoreService
   ) { }
 
   ngOnInit() {

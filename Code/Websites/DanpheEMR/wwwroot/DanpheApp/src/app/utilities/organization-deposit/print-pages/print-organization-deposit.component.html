@@ -34,12 +34,12 @@
               </div>
               <div>
                 <p *ngIf="organizationDeposit.TransactionType=='Deposit'">
-                  Deposit Amount: Rs. {{organizationDeposit.InAmount}}
+                  Deposit Amount: {{coreService.currencyUnit}} {{organizationDeposit.InAmount}}
                 </p>
               </div>
               <div>
                 <p *ngIf="organizationDeposit.TransactionType=='ReturnDeposit'">
-                  Return Amount: Rs. {{organizationDeposit.OutAmount}}
+                  Return Amount: {{coreService.currencyUnit}} {{organizationDeposit.OutAmount}}
                 </p>
               </div>
             </div>

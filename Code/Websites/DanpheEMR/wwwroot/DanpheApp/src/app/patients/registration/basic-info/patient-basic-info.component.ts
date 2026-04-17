@@ -234,7 +234,7 @@ export class PatientBasicInfoComponent implements IRouteGuard {
     let countryId: number = 0;
     try {
       let countryJson = this.coreService.Parameters.filter(a => a.ParameterName == 'DefaultCountry')[0]["ParameterValue"];
-      countryId = JSON.parse(countryJson).CountryId;
+      countryId = Number(JSON.parse(countryJson).CountryId);
     } catch (ex) {
       countryId = 0;
     }

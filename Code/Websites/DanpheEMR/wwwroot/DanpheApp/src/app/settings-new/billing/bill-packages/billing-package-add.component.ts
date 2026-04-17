@@ -568,7 +568,7 @@ export class BillingPackageAddComponent {
     let html: string = "";
     if (data.ServiceDepartmentName !== "OPD") {
       html = "<font color='blue'; size=03 >" + data["ItemCode"] + "&nbsp;&nbsp;" + ":" + "&nbsp;" + data["ItemName"].toUpperCase() + "</font>" + "&nbsp;&nbsp;";
-      html += "(<i>" + data["ServiceDepartmentName"] + "</i>)" + "&nbsp;&nbsp;" + 'Rs.' + "<b>" + data["Price"] + "</b>";
+      html += "(<i>" + data["ServiceDepartmentName"] + "</i>)" + "&nbsp;&nbsp;" + this.coreService.currencyUnit + "<b>" + data["Price"] + "</b>";
       return html;
     }
     else {

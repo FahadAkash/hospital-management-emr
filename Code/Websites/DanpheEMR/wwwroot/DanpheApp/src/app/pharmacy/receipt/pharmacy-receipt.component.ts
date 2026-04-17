@@ -713,7 +713,7 @@ export class PharmacyReceiptComponent {
       summaryStr += this.getPaymentDetails(this.receipt.PaymentModeDetails).trim() + this.nline;
     }
     //Footer Code
-    let totAmtInWords = 'Rs. ' + CommonFunctions.GetNumberInWords(this.receipt.TotalAmount);
+    let totAmtInWords = this.coreService.currencyUnit + '. ' + CommonFunctions.GetNumberInWords(this.receipt.TotalAmount);
     var footerStr = '';
     footerStr += CommonFunctions.GetHorizontalLineOfLength(horizontalCols) + this.nline;
     footerStr += CommonFunctions.GetPHRMTextFIlledToALengthForParticulars(totAmtInWords, horizontalCols, 0) + this.nline;

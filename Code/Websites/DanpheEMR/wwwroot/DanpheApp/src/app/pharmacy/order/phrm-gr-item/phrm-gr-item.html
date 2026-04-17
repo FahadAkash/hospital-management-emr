@@ -271,7 +271,7 @@
                              *ngIf="goodReceiptItem.ItemRateHistory.length;else noPriceHistoryMessage">
                             <span class="tooltip-header">Rate History</span>
                             <span *ngFor="let itemRate of goodReceiptItem.ItemRateHistory">
-                              Rs.{{itemRate.GRItemPrice}}-{{itemRate.SupplierName}}-{{itemRate.GoodReceiptDate | date: 'yyyy-M-d'}}
+                              {{coreService.currencyUnit}}{{itemRate.GRItemPrice}}-{{itemRate.SupplierName}}-{{itemRate.GoodReceiptDate | date: 'yyyy-M-d'}}
                             </span>
                           </p>
                           <ng-template #noPriceHistoryMessage>
@@ -332,7 +332,7 @@
                              *ngIf="goodReceiptItem.ItemMRPHistory.length;else noMRPHistoryMessage">
                             <span class="tooltip-header">SalePrice History</span>
                             <span *ngFor="let itemMRP of goodReceiptItem.ItemMRPHistory">
-                              Rs.{{itemMRP.SalePrice}}-{{itemMRP.SupplierName}}-{{itemMRP.GoodReceiptDate | date: 'yyyy-M-d'}}
+                              {{coreService.currencyUnit}}{{itemMRP.SalePrice}}-{{itemMRP.SupplierName}}-{{itemMRP.GoodReceiptDate | date: 'yyyy-M-d'}}
                             </span>
                           </p>
                           <ng-template #noMRPHistoryMessage>

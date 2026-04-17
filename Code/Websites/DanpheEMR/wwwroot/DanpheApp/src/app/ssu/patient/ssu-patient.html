@@ -207,16 +207,15 @@
                         </div>
 
                         <div class="form-group">
-                          <label class="control-label col-md-4">{{GeneralFieldLabel.Caste}}<b>:</b></label>
+                          <label class="control-label col-md-4">Religion<b>:</b></label>
                           <div class="col-md-8">
                             <select id="EthnicGroup" class="form-control" [(ngModel)]="model.EthnicGroup"
                                     [ngModelOptions]="{standalone: true}" (change)="setFocusById('race')">
-                              <option value="Dalit">Dalit</option>
-                              <option value="JanaJaati">JanaJaati</option>
-                              <option value="Madhesi">Madhesi</option>
-                              <option value="Muslim">Muslim</option>
-                              <option value="Brahmin/Chhetri">Brahmin/Chhetri</option>
-                              <option value="Other">Other</option>
+                              <option value="Islam">Islam</option>
+                              <option value="Hinduism">Hinduism</option>
+                              <option value="Buddhism">Buddhism</option>
+                              <option value="Christianity">Christianity</option>
+                              <option value="Other religions">Other religions</option>
                             </select>
                           </div>
                         </div>

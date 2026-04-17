@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import * as moment from 'moment';
+import { CoreService } from '../../../core/shared/core.service';
 import { ENUM_PrintingType, PrinterSettingsModel } from '../../../settings-new/printers/printer-settings.model';
 import { MessageboxService } from '../../../shared/messagebox/messagebox.service';
 import { ENUM_DateFormats, ENUM_MessageBox_Status } from '../../../shared/shared-enums';
@@ -29,7 +30,8 @@ export class EchsMrpDrugCertificatePrintComponent implements OnInit {
 
   constructor(
     private changeDetector: ChangeDetectorRef,
-    private messageBoxService: MessageboxService
+    private messageBoxService: MessageboxService,
+    public coreService: CoreService
   ) {
 
   }
