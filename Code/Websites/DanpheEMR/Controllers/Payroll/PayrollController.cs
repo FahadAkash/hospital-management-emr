@@ -202,7 +202,7 @@ namespace DanpheEMR.Controllers
                                      {
                                          EmployeeId = req.EmployeeId,
                                          EmpName = emp.FirstName + " " + emp.LastName,
-                                         EmployeeLeaveId = req.EmpLeaveId,
+                                         EmpLeaveId = req.EmpLeaveId,
                                          leavetype = leaveCat.LeaveCategoryName,
                                          leaveCategoryCode = leaveCat.CategoryCode,
                                          RequestedLeaveDate = req.Date,
@@ -212,7 +212,7 @@ namespace DanpheEMR.Controllers
                                          LeaveStatus = req.LeaveStatus,
                                          CancelledDate = req.CancelledOn,
                                          CancelledBy = req.CancelledBy
-                                     }).OrderByDescending(a => a.EmployeeLeaveId).ToList();
+                                     }).OrderByDescending(a => a.EmpLeaveId).ToList();
                     responseData.Results = EmpLeaves;
                     responseData.Status = "OK";
                 }
@@ -259,7 +259,7 @@ namespace DanpheEMR.Controllers
                                   join levemp in payrollDbContext.employeeLeaveModels on emp.EmployeeId equals levemp.EmployeeId
                                   join levRul in payrollDbContext.leaveRuleModels on levemp.LeaveRuleId equals levRul.LeaveRuleId
                                   join levCat in payrollDbContext.leaveCategories on levRul.LeaveCategoryId equals levCat.LeaveCategoryId
-                                  where levemp.Date.Year == Year && levRul.IsActive == true
+                                  where levemp.Date.Value.Year == Year && levRul.IsActive == true
                                   && (isPayrollPrivilegedUser || levemp.EmployeeId == currentEmployeeId)
                                   group new { emp, levemp, levRul, levCat } by new
                                   {
@@ -344,7 +344,7 @@ namespace DanpheEMR.Controllers
                     var empLeaveModel = (from emplev in payrollDbContext.employeeLeaveModels
                                          join lr in payrollDbContext.leaveRuleModels on emplev.LeaveRuleId equals lr.LeaveRuleId
                                          join lc in payrollDbContext.leaveCategories on lr.LeaveCategoryId equals lc.LeaveCategoryId
-                                         where emplev.EmployeeId == empId && emplev.Date.Year == Year
+                                         where emplev.EmployeeId == empId && emplev.Date.Value.Year == Year
                                          select new
                                          {
                                              EmployeeId = emplev.EmployeeId,
@@ -358,8 +358,8 @@ namespace DanpheEMR.Controllers
                                   select new
                                   {
                                       Date = lev.Date,
-                                      TotalLeave = empLeaveModel.Where(e => e.EmployeeId == lev.EmployeeId && e.Date.Year == Year).Select(e => e.EmployeeId).Count(),
-                                      Category = empLeaveModel.Where(e => e.EmployeeId == lev.EmployeeId && e.Date.Year == Year).Select(e => new { e.Category, e.Date, e.Description }).ToList(),
+                                      TotalLeave = empLeaveModel.Where(e => e.EmployeeId == lev.EmployeeId && e.Date.Value.Year == Year).Select(e => e.EmployeeId).Count(),
+                                      Category = empLeaveModel.Where(e => e.EmployeeId == lev.EmployeeId && e.Date.Value.Year == Year).Select(e => new { e.Category, e.Date, e.Description }).ToList(),
 
                                   }).FirstOrDefault();
 
@@ -683,7 +683,7 @@ namespace DanpheEMR.Controllers
                 else if (reqType == "update-leave-status")
                 {
                     EmployeeLeaveModel leaveRequest = DanpheJSONConvert.DeserializeObject<EmployeeLeaveModel>(str);
-                    if (leaveRequest != null)
+                    if (leaveRequest != null && currentUser != null)
                     {
                         var leaveFromDB = payrollDbContext.employeeLeaveModels.Where(a => a.EmpLeaveId == leaveRequest.EmpLeaveId).FirstOrDefault();
                         if (leaveFromDB != null)
@@ -704,6 +704,16 @@ namespace DanpheEMR.Controllers
                             responseData.Status = "OK";
                             responseData.Results = leaveFromDB;
                         }
+                        else
+                        {
+                            responseData.Status = "Failed";
+                            responseData.ErrorMessage = "Leave request record not found.";
+                        }
+                    }
+                    else
+                    {
+                        responseData.Status = "Failed";
+                        responseData.ErrorMessage = "Invalid request or session expired.";
                     }
                 }
                 else if (reqType == "PutLeaveCategory")

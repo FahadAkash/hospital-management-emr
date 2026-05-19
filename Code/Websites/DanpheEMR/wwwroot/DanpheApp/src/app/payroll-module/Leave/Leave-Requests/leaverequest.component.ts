@@ -36,6 +36,9 @@ export class LeaveRequestComponent {
     this.employee.EmployeeId = this.securityService.GetLoggedInUser().EmployeeId;
     this.LoadEmployeeList();
     this.LeaveRequestListComlumns = GridColumnSettings.EmployeeListwithStatus;
+    if (!this.securityService.HasPermission('payroll-main-setting-view')) {
+      this.LeaveRequestListComlumns = GridColumnSettings.EmployeeListwithStatus.filter(a => a.headerName != "Action");
+    }
     this.selLeaveRequests.LeaveStatus = "all";
     this.OnSelectStatus("all");
   }
@@ -180,8 +183,9 @@ export class LeaveRequestComponent {
 
   UpdateLeaveStatus(data: any, status: string) {
     let leaveRequest: EmployeeLeaveModel = new EmployeeLeaveModel();
-    leaveRequest.EmpLeaveId = data.EmployeeLeaveId;
+    leaveRequest.EmpLeaveId = data.EmpLeaveId;
     leaveRequest.LeaveStatus = status;
+    leaveRequest.Date = data.RequestedLeaveDate;
 
     this.payrollBLService.UpdateLeaveStatus(leaveRequest)
       .subscribe(res => {

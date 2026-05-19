@@ -6,6 +6,7 @@ import GridColumnSettings from '../../../shared/danphe-grid/grid-column-settings
 import { GridEmitModel } from '../../../shared/danphe-grid/grid-emit.model';
 import * as moment from 'moment';
 import { CoreService } from '../../../core/shared/core.service';
+import { SecurityService } from '../../../security/shared/security.service';
 
 
 @Component({
@@ -28,14 +29,17 @@ export class LeaveRuleListComponent {
     public update: boolean;
     constructor(public payrollBLService: PayrollBLService, public _coreService: CoreService,
         public messageboxService: MessageboxService,
-        public changeDetectorRef: ChangeDetectorRef) {
+        public changeDetectorRef: ChangeDetectorRef,
+        public securityService: SecurityService) {
         this.currentYear = moment().startOf("year").format('YYYY');
         this.yyyy = this.currentYear;
         this.LeaveRuleListComlumns = GridColumnSettings.LeaveRuleList;
-        this.getDefaultYears();
-      this.getLeaveRulelist(this.currentYear);
-      
+        if (!this.securityService.HasPermission('payroll-main-setting-view')) {
+            this.LeaveRuleListComlumns = GridColumnSettings.LeaveRuleList.filter(a => a.headerName != "Action");
         }
+        this.getDefaultYears();
+        this.getLeaveRulelist(this.currentYear);
+    }
     ngOnInit() {
         this.update = false;
     }

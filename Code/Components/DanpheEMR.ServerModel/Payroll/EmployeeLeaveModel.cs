@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -13,8 +13,8 @@ namespace DanpheEMR.ServerModel
         public int EmpLeaveId {get;set;}
         public int LeaveRuleId { get; set; }
         public int EmployeeId { get; set; }
-        public DateTime Date { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTime? Date { get; set; }
+        public DateTime? CreatedOn { get; set; }
         public int CreatedBy { get; set; }
         public int RequestedTo { get; set; }
         public int? ApprovedBy { get; set; }

@@ -1,4 +1,4 @@
-﻿using Audit.EntityFramework;
+using Audit.EntityFramework;
 using DanpheEMR.ServerModel;
 using DanpheEMR.ServerModel.BillingModels;
 using DanpheEMR.ServerModel.MedicareModels;
@@ -9,7 +9,7 @@ namespace DanpheEMR.DalLayer
 {
     //public class PatientDbContext : CommonDbContext
     [AuditDbContext(Mode = AuditOptionMode.OptIn)]
-    public class PatientDbContext : DbContext
+    public class PatientDbContext : AuditDbContext
     {
         public DbSet<PatientModel> Patients { get; set; }
         public DbSet<BillingSchemeModel> Schemes { get; set; }
