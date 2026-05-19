@@ -24,6 +24,9 @@ package-lock.json
 /Database/2. EMR-Db/DanpheInternationalDB/Dev_DanpheEMR_INT1.bak
 /Database/2. EMR-Db/DanpheInternationalDB/Dev_DanpheEMR_INT1.zip
 
+# Allow the specific EMR DB zip backup to be pushed (required for other projects to work)
+!/Database/2. EMR-Db/DanpheInternationalDB/Dev_DanpheEMR_INT1.zip
+
 # Misc
 *.rar
 *.zip
